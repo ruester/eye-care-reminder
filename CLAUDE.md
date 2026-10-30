@@ -36,7 +36,8 @@ All builds go through `just` (`just --list` shows the recipes):
 - `just build-windows` -> `build/eye-care-reminder-windows-x64.msi` (Windows host
   with the .NET SDK and `pwsh`; install WiX once with
   `dotnet tool install --global wix --version 5.0.2` and
-  `wix extension add --global WixToolset.Util.wixext/5.0.2`)
+  `wix extension add --global WixToolset.Util.wixext/5.0.2` and
+  `wix extension add --global WixToolset.UI.wixext/5.0.2`)
 - `just clean` -> empties `build/` except `.keep`
 
 The version comes from the `VERSION` environment variable (default `0.0.0`).
@@ -64,7 +65,8 @@ suffixes such as `-rc1`.
   **.NET Framework 4.8** (preinstalled on Windows 10 1903+ / 11, so the MSI
   needs no runtime). Keep it dependency-free (no NuGet packages).
 - `TrayApplicationContext` owns the tray icon (left click or "Settings..."
-  opens `SettingsForm`; menu also has "Take a break now" and "Exit") and a
+  opens `SettingsForm`, which also has a "Test notification" button; menu also
+  has "Take a break now" and "Exit") and a
   timer that shows a notification every interval via
   `NotifyIcon.ShowBalloonTip` (rendered as a toast in the bottom-right corner
   on Windows 10/11). Unlocking the session restarts the interval.
@@ -81,8 +83,12 @@ suffixes such as `-rc1`.
 - The MSI installs to `Program Files\Eye Care Reminder`, adds a Start menu
   shortcut, registers autostart for all users
   (`HKLM\...\CurrentVersion\Run`), closes a running instance before
-  upgrade/uninstall (`util:CloseApplication`) and launches the app after
-  installation.
+  upgrade/uninstall (`util:CloseApplication`).
+- Setup wizard: `WixUI_InstallDir` with the license page skipped (no license
+  yet; drop the two `Order="99"` overrides once a `WixUILicenseRtf` exists).
+  The final page has a "Launch Eye Care Reminder" checkbox (`WixShellExec`,
+  runs as the non-elevated user). Silent installs (`/qn`) don't launch the app;
+  it starts at the next logon.
 
 - The MSI is built with the WiX Toolset and is **not code-signed**. This is
   valid: the MSI installs normally, but Windows SmartScreen shows

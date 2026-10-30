@@ -73,10 +73,15 @@ namespace EyeCareReminder
 
         private void ShowReminder()
         {
+            ShowBreakNotification();
+            RestartTimer();
+        }
+
+        private void ShowBreakNotification()
+        {
             trayIcon.ShowBalloonTip(NotificationTimeoutMs, "Time for an eye break",
                 "Look at something at least 6 metres (20 feet) away for 20 seconds and blink a few times.",
                 ToolTipIcon.None);
-            RestartTimer();
         }
 
         private void ShowSettings()
@@ -87,7 +92,7 @@ namespace EyeCareReminder
                 return;
             }
 
-            using (settingsForm = new SettingsForm(intervalMinutes))
+            using (settingsForm = new SettingsForm(intervalMinutes, ShowBreakNotification))
             {
                 if (settingsForm.ShowDialog() == DialogResult.OK)
                 {

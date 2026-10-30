@@ -33,7 +33,7 @@ build-linux:
 build-windows:
     if (Test-Path build/windows) { Remove-Item -Recurse -Force build/windows }
     dotnet publish src/windows/app/EyeCareReminder.csproj -c Release -o build/windows/payload -p:Version={{version}}
-    wix build src/windows/installer/Package.wxs -arch x64 -ext WixToolset.Util.wixext -d Version={{version}} -bindpath payload=build/windows/payload -o {{windows_msi}}
+    wix build src/windows/installer/Package.wxs -arch x64 -ext WixToolset.Util.wixext -ext WixToolset.UI.wixext -d Version={{version}} -bindpath payload=build/windows/payload -o {{windows_msi}}
     Write-Host "Built {{windows_msi}} (version {{version}})"
 
 # Remove all build artifacts (keeps build/.keep)

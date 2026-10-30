@@ -1,3 +1,4 @@
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -8,7 +9,7 @@ namespace EyeCareReminder
     {
         private readonly NumericUpDown intervalInput;
 
-        public SettingsForm(int intervalMinutes)
+        public SettingsForm(int intervalMinutes, Action showTestNotification)
         {
             Text = "Eye Care Reminder - Settings";
             Icon = AppIcon.Load(SystemInformation.IconSize);
@@ -62,6 +63,9 @@ namespace EyeCareReminder
                 Margin = new Padding(3, 6, 3, 3),
             });
 
+            // Shows a sample reminder without affecting the timer.
+            var testButton = new Button { Text = "Test notification", AutoSize = true };
+            testButton.Click += (s, e) => showTestNotification();
             var saveButton = new Button { Text = "Save", DialogResult = DialogResult.OK, AutoSize = true };
             var cancelButton = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, AutoSize = true };
             var buttons = new FlowLayoutPanel
@@ -71,6 +75,7 @@ namespace EyeCareReminder
                 Anchor = AnchorStyles.Right,
                 Margin = new Padding(0, 12, 0, 0),
             };
+            buttons.Controls.Add(testButton);
             buttons.Controls.Add(saveButton);
             buttons.Controls.Add(cancelButton);
             layout.Controls.Add(buttons);
