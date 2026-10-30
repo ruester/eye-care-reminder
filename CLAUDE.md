@@ -7,6 +7,10 @@ Guidance for Claude Code when working in this repository.
 Eye Care Reminder is a desktop notification app for **Windows** and **Linux**
 that periodically (user-defined interval) reminds the user to rest their eyes.
 
+## Workflow
+
+Work directly on `main`: commit and push there. Do not create feature branches.
+
 ## Repository layout
 
 ```
