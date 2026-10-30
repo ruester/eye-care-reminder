@@ -11,15 +11,16 @@ namespace EyeCareReminder
     /// </summary>
     internal sealed class TrayApplicationContext : ApplicationContext
     {
-        private const int NotificationTimeoutMs = 10000;
+        private const int NotificationTimeoutMs = 20000;
 
         private readonly NotifyIcon trayIcon;
         private readonly System.Windows.Forms.Timer reminderTimer;
         private readonly RegisteredWaitHandle showSettingsRegistration;
         private int intervalMinutes;
         private SettingsForm settingsForm;
+        private NotificationPopup popup;
 
-        public TrayApplicationContext(WaitHandle showSettingsSignal)
+        public TrayApplicationContext(WaitHandle showSettingsSignal, bool openSettings)
         {
             bool isFirstRun = !Settings.Exists();
             intervalMinutes = Settings.LoadIntervalMinutes();
@@ -65,9 +66,14 @@ namespace EyeCareReminder
 
             if (isFirstRun)
             {
-                trayIcon.ShowBalloonTip(NotificationTimeoutMs, "Eye Care Reminder is running",
+                ShowPopup("Eye Care Reminder is running",
                     $"You will be reminded to rest your eyes every {FormatInterval(intervalMinutes)}. "
-                    + "Click the tray icon to change the interval.", ToolTipIcon.None);
+                    + "Click the eye icon in the notification area to change the interval.");
+            }
+
+            if (openSettings)
+            {
+                uiContext.Post(_ => ShowSettings(), null);
             }
         }
 
@@ -79,9 +85,23 @@ namespace EyeCareReminder
 
         private void ShowBreakNotification()
         {
-            trayIcon.ShowBalloonTip(NotificationTimeoutMs, "Time for an eye break",
-                "Look at something at least 6 metres (20 feet) away for 20 seconds and blink a few times.",
-                ToolTipIcon.None);
+            ShowPopup("Time for an eye break",
+                "Look at something at least 6 metres (20 feet) away for 20 seconds and blink a few times.");
+        }
+
+        private void ShowPopup(string title, string message)
+        {
+            popup?.Close();
+            popup = new NotificationPopup(title, message, NotificationTimeoutMs);
+            popup.FormClosed += (s, e) =>
+            {
+                if (s == popup)
+                {
+                    popup = null;
+                }
+                ((Form)s).Dispose();
+            };
+            popup.Show();
         }
 
         private void ShowSettings()
@@ -135,6 +155,7 @@ namespace EyeCareReminder
         protected override void ExitThreadCore()
         {
             settingsForm?.Close();
+            popup?.Close();
             SystemEvents.SessionSwitch -= OnSessionSwitch;
             showSettingsRegistration.Unregister(null);
             reminderTimer.Dispose();

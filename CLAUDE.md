@@ -71,9 +71,17 @@ suffixes such as `-rc1`.
 - `TrayApplicationContext` owns the tray icon (left click or "Settings..."
   opens `SettingsForm`, which also has a "Test notification" button; menu also
   has "Take a break now" and "Exit") and a
-  timer that shows a notification every interval via
-  `NotifyIcon.ShowBalloonTip` (rendered as a toast in the bottom-right corner
-  on Windows 10/11). Unlocking the session restarts the interval.
+  timer that shows a notification every interval. Unlocking the session
+  restarts the interval.
+- Notifications are drawn by the app itself (`NotificationPopup`: borderless,
+  topmost, non-activating window in the bottom-right corner of the primary
+  screen's work area, closes on click or after 20 s). Do not switch back to
+  `NotifyIcon.ShowBalloonTip`: Windows 10/11 silently drops those when Do Not
+  Disturb / Focus Assist is on or app notifications are disabled.
+- Startup: the logon autostart entry passes `--autostart` and the app starts
+  silently in the tray. Any other launch (Start menu, installer's "Launch"
+  checkbox) opens the settings dialog so the user sees that the app is running
+  (Windows 11 hides new tray icons in the overflow by default).
 - Settings: `HKCU\Software\EyeCareReminder\IntervalMinutes` (DWORD, default
   60, range 1-1440), see `Settings.cs`.
 - Single instance via a named mutex; launching the exe again signals the running

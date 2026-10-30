@@ -34,12 +34,12 @@
                     Description="Reminds you to rest your eyes"
                     WorkingDirectory="INSTALLFOLDER" />
         </File>
-        <!-- Start with Windows for every user. -->
+        <!-- Start with Windows for every user (silently, in the tray). -->
         <RegistryValue Root="HKLM"
                        Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
                        Name="EyeCareReminder"
                        Type="string"
-                       Value="&quot;[#AppExe]&quot;" />
+                       Value="&quot;[#AppExe]&quot; --autostart" />
       </Component>
       <Component>
         <File Source="!(bindpath.payload)\EyeCareReminder.exe.config" />
