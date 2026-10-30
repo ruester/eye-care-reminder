@@ -15,7 +15,12 @@
            Version="$(var.Version)"
            UpgradeCode="5b0d7c1e-3f4a-4e8b-9c2d-6a1f0e7b3d54"
            Scope="perMachine">
-    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <!-- Remove the old version inside this installation, right after the running app was closed. -->
+    <MajorUpgrade Schedule="afterInstallInitialize"
+                  DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+
+    <!-- The tray app is closed by CloseTrayApp below; skip the "files in use" prompt. -->
+    <Property Id="MSIRESTARTMANAGERCONTROL" Value="Disable" />
     <MediaTemplate EmbedCab="yes" />
 
     <Icon Id="AppIcon.ico" SourceFile="$(sys.SOURCEFILEDIR)..\app\EyeCareReminder.ico" />
@@ -50,11 +55,25 @@
       <ComponentGroupRef Id="AppFiles" />
     </Feature>
 
-    <!-- Stop the running tray app before files are replaced or removed. -->
-    <util:CloseApplication Id="CloseTrayApp"
-                           Target="EyeCareReminder.exe"
-                           TerminateProcess="0"
-                           RebootPrompt="no" />
+    <!--
+      Close every running instance of the tray app (any user, also elevated ones)
+      before the old version is removed and files are replaced, on install,
+      upgrade, repair and uninstall. Runs as LocalSystem; taskkill fails
+      harmlessly when the app is not running.
+    -->
+    <SetProperty Id="CloseTrayApp"
+                 Value="&quot;[System64Folder]taskkill.exe&quot; /F /IM EyeCareReminder.exe"
+                 Before="CloseTrayApp"
+                 Sequence="execute" />
+    <CustomAction Id="CloseTrayApp"
+                  BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
+                  DllEntry="WixQuietExec"
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore" />
+    <InstallExecuteSequence>
+      <Custom Action="CloseTrayApp" Before="RemoveExistingProducts" />
+    </InstallExecuteSequence>
 
     <!-- Setup wizard: Welcome -> install folder -> Install -> Completed (no license page). -->
     <UI>

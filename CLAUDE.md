@@ -94,8 +94,15 @@ suffixes such as `-rc1`.
 
 - The MSI installs to `Program Files\Eye Care Reminder`, adds a Start menu
   shortcut, registers autostart for all users
-  (`HKLM\...\CurrentVersion\Run`), closes a running instance before
-  upgrade/uninstall (`util:CloseApplication`).
+  (`HKLM\...\CurrentVersion\Run`).
+- Running app on install/upgrade/uninstall: the deferred `CloseTrayApp` action
+  (`WixQuietExec` + `taskkill /F`, LocalSystem) ends every instance right before
+  `RemoveExistingProducts` (`MajorUpgrade Schedule="afterInstallInitialize"`),
+  and `MSIRESTARTMANAGERCONTROL=Disable` avoids the "files in use" prompt.
+- CI tests this with `src/windows/installer/Test-Installer.ps1`: installs a
+  0.0.0 build, starts the app, upgrades to the current build and uninstalls,
+  each while the app is running (no reboot, no leftovers, one product entry).
+  Non-tag CI builds are versioned `0.0.<run number>` so the upgrade is real.
 - Setup wizard: `WixUI_InstallDir` with the license page skipped (no license
   yet; drop the two `Order="99"` overrides once a `WixUILicenseRtf` exists).
   The final page has a "Launch Eye Care Reminder" checkbox (`WixShellExec`,
