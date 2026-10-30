@@ -11,7 +11,7 @@ Eye Care Reminder is a lightweight desktop application for Windows and Linux tha
 
 ## Development
 
-All builds run through [just](https://github.com/casey/just) (`just --list` shows the available recipes). Build output is written to `build/`.
+All builds run through [just](https://github.com/casey/just) (`just --list` shows the available recipes). Build output is written to `build/`. To stamp a version into a build, set the `VERSION` environment variable (numeric `major.minor.patch`, default `0.0.0`), e.g. `VERSION=1.2.3 just build-linux` or, in PowerShell, `$env:VERSION = "1.2.3"; just build-windows`.
 
 ### Windows
 
@@ -56,5 +56,3 @@ Build the installer (`build/eye-care-reminder-linux.bin`):
 ```bash
 just build-linux
 ```
-
-Set the `VERSION` environment variable (numeric `major.minor.patch`, default `0.0.0`) to stamp a version into the build, e.g. `VERSION=1.2.3 just build-linux`.
