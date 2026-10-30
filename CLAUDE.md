@@ -96,9 +96,12 @@ suffixes such as `-rc1`.
   shortcut, registers autostart for all users
   (`HKLM\...\CurrentVersion\Run`).
 - Running app on install/upgrade/uninstall: the deferred `CloseTrayApp` action
-  (`WixQuietExec` + `taskkill /F`, LocalSystem) ends every instance right before
-  `RemoveExistingProducts` (`MajorUpgrade Schedule="afterInstallInitialize"`),
-  and `MSIRESTARTMANAGERCONTROL=Disable` avoids the "files in use" prompt.
+  (`WixQuietExec` + `taskkill /F`, LocalSystem) ends every instance right after
+  `InstallInitialize`, before files are touched. `MajorUpgrade` uses
+  `Schedule="afterInstallExecute"` (new files first, old product removed last):
+  `RemoveExistingProducts` may not follow script-generating actions such as
+  `CloseTrayApp` when scheduled early (error 2613). `MSIRESTARTMANAGERCONTROL=Disable`
+  avoids the "files in use" prompt.
 - CI tests this with `src/windows/installer/Test-Installer.ps1`: installs a
   0.0.0 build, starts the app, upgrades to the current build and uninstalls,
   each while the app is running (no reboot, no leftovers, one product entry).

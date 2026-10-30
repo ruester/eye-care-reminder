@@ -15,8 +15,12 @@
            Version="$(var.Version)"
            UpgradeCode="5b0d7c1e-3f4a-4e8b-9c2d-6a1f0e7b3d54"
            Scope="perMachine">
-    <!-- Remove the old version inside this installation, right after the running app was closed. -->
-    <MajorUpgrade Schedule="afterInstallInitialize"
+    <!--
+      Upgrade: install the new files first (after CloseTrayApp ended the running app),
+      then remove what is left of the old version. Requires stable component GUIDs
+      (WiX derives them from the install paths).
+    -->
+    <MajorUpgrade Schedule="afterInstallExecute"
                   DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
 
     <!-- The tray app is closed by CloseTrayApp below; skip the "files in use" prompt. -->
@@ -57,8 +61,8 @@
 
     <!--
       Close every running instance of the tray app (any user, also elevated ones)
-      before the old version is removed and files are replaced, on install,
-      upgrade, repair and uninstall. Runs as LocalSystem; taskkill fails
+      at the start of the installation script, before files are replaced or
+      removed, on install, upgrade, repair and uninstall. Runs as LocalSystem; taskkill fails
       harmlessly when the app is not running.
     -->
     <SetProperty Id="CloseTrayApp"
@@ -72,7 +76,7 @@
                   Impersonate="no"
                   Return="ignore" />
     <InstallExecuteSequence>
-      <Custom Action="CloseTrayApp" Before="RemoveExistingProducts" />
+      <Custom Action="CloseTrayApp" After="InstallInitialize" />
     </InstallExecuteSequence>
 
     <!-- Setup wizard: Welcome -> install folder -> Install -> Completed (no license page). -->
