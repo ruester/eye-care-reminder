@@ -1,0 +1,27 @@
+<!--
+  WiX Toolset (v5) source for the Eye Care Reminder MSI installer.
+  Built by `just build-windows`; every file in the payload directory
+  (bind path "payload") is installed to Program Files\Eye Care Reminder.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="Eye Care Reminder"
+           Manufacturer="Eye Care Reminder"
+           Version="$(var.Version)"
+           UpgradeCode="5b0d7c1e-3f4a-4e8b-9c2d-6a1f0e7b3d54"
+           Scope="perMachine">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Eye Care Reminder" />
+    </StandardDirectory>
+
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Files Include="!(bindpath.payload)\**" />
+    </ComponentGroup>
+
+    <Feature Id="Main">
+      <ComponentGroupRef Id="AppFiles" />
+    </Feature>
+  </Package>
+</Wix>
