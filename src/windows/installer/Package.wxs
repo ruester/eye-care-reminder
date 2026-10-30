@@ -1,9 +1,14 @@
 <!--
   WiX Toolset (v5) source for the Eye Care Reminder MSI installer.
-  Built by `just build-windows`; every file in the payload directory
-  (bind path "payload") is installed to Program Files\Eye Care Reminder.
+  Built by `just build-windows` from the published app in the payload
+  directory (bind path "payload").
+
+  Installs to Program Files\Eye Care Reminder, adds a Start menu shortcut,
+  starts the tray app for every user at logon and launches it right after
+  installation.
 -->
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
   <Package Name="Eye Care Reminder"
            Manufacturer="Eye Care Reminder"
            Version="$(var.Version)"
@@ -12,16 +17,53 @@
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
     <MediaTemplate EmbedCab="yes" />
 
+    <Icon Id="AppIcon.ico" SourceFile="$(sys.SOURCEFILEDIR)..\app\EyeCareReminder.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon.ico" />
+
     <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="INSTALLFOLDER" Name="Eye Care Reminder" />
     </StandardDirectory>
 
     <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
-      <Files Include="!(bindpath.payload)\**" />
+      <Component>
+        <File Id="AppExe" Source="!(bindpath.payload)\EyeCareReminder.exe" KeyPath="yes">
+          <Shortcut Id="StartMenuShortcut"
+                    Directory="ProgramMenuFolder"
+                    Name="Eye Care Reminder"
+                    Description="Reminds you to rest your eyes"
+                    WorkingDirectory="INSTALLFOLDER" />
+        </File>
+        <!-- Start with Windows for every user. -->
+        <RegistryValue Root="HKLM"
+                       Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+                       Name="EyeCareReminder"
+                       Type="string"
+                       Value="&quot;[#AppExe]&quot;" />
+      </Component>
+      <Component>
+        <File Source="!(bindpath.payload)\EyeCareReminder.exe.config" />
+      </Component>
     </ComponentGroup>
 
     <Feature Id="Main">
       <ComponentGroupRef Id="AppFiles" />
     </Feature>
+
+    <!-- Stop the running tray app before files are replaced or removed. -->
+    <util:CloseApplication Id="CloseTrayApp"
+                           Target="EyeCareReminder.exe"
+                           TerminateProcess="0"
+                           RebootPrompt="no" />
+
+    <!-- Launch the tray app after a fresh install or upgrade. -->
+    <CustomAction Id="LaunchApplication"
+                  FileRef="AppExe"
+                  ExeCommand=""
+                  Execute="immediate"
+                  Impersonate="yes"
+                  Return="asyncNoWait" />
+    <InstallExecuteSequence>
+      <Custom Action="LaunchApplication" After="InstallFinalize" Condition="NOT Installed AND NOT REMOVE" />
+    </InstallExecuteSequence>
   </Package>
 </Wix>

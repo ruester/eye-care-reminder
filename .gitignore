@@ -2,6 +2,10 @@
 build/*
 !build/.keep
 
+# .NET build output
+bin/
+obj/
+
 # Vim / Neovim
 *.swp
 *.swo

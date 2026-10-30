@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [main]
+    branches: ["**"]
     tags: ["v*.*.*"]
   pull_request:
   workflow_dispatch:
@@ -39,7 +39,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: extractions/setup-just@v2
       - name: Install WiX Toolset
-        run: dotnet tool install --global wix --version 5.0.2
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          wix extension add --global WixToolset.Util.wixext/5.0.2
       - name: Determine version
         shell: bash
         run: |

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- .NET Framework 4.8 ships with Windows 10 (1903+) and 11: no runtime install needed. -->
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>EyeCareReminder</RootNamespace>
+    <AssemblyName>EyeCareReminder</AssemblyName>
+    <ApplicationIcon>EyeCareReminder.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Product>Eye Care Reminder</Product>
+    <Description>Reminds you to rest your eyes at a configurable interval.</Description>
+    <Version>0.0.0</Version>
+    <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="EyeCareReminder.ico" LogicalName="EyeCareReminder.ico" />
+  </ItemGroup>
+
+</Project>

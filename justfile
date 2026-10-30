@@ -28,14 +28,12 @@ build-linux:
     chmod +x "{{linux_bin}}"
     echo "Built {{linux_bin}} (version {{version}})"
 
-# Build the Windows MSI installer (requires WiX Toolset: dotnet tool install --global wix)
+# Build the Windows tray app and MSI installer (requires the .NET SDK and WiX Toolset, see CLAUDE.md)
 [windows]
 build-windows:
     if (Test-Path build/windows) { Remove-Item -Recurse -Force build/windows }
-    New-Item -ItemType Directory -Force build/windows/payload | Out-Null
-    Copy-Item -Recurse -Path src/windows/app/* -Exclude .keep -Destination build/windows/payload
-    Copy-Item README.md build/windows/payload/
-    wix build src/windows/installer/Package.wxs -arch x64 -d Version={{version}} -bindpath payload=build/windows/payload -o {{windows_msi}}
+    dotnet publish src/windows/app/EyeCareReminder.csproj -c Release -o build/windows/payload -p:Version={{version}}
+    wix build src/windows/installer/Package.wxs -arch x64 -ext WixToolset.Util.wixext -d Version={{version}} -bindpath payload=build/windows/payload -o {{windows_msi}}
     Write-Host "Built {{windows_msi}} (version {{version}})"
 
 # Remove all build artifacts (keeps build/.keep)

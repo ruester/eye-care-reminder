@@ -17,7 +17,7 @@ src/
     xfce/          Xfce variant
     unity/         Unity (Ubuntu) variant
   windows/
-    app/           Windows application files (packaged into the MSI)
+    app/           C# WinForms tray app (.NET Framework 4.8, EyeCareReminder.csproj)
     installer/     Package.wxs (WiX Toolset v5 source for the MSI)
 build/             build output; only build/.keep is tracked
 justfile           all build recipes
@@ -33,8 +33,10 @@ and must be added to `SUPPORTED`, the detection logic and the prompt in
 All builds go through `just` (`just --list` shows the recipes):
 
 - `just build-linux` -> `build/eye-care-reminder-linux.bin` (Linux/macOS host)
-- `just build-windows` -> `build/eye-care-reminder-windows-x64.msi` (Windows host,
-  needs `dotnet tool install --global wix --version 5.0.2`; runs under `pwsh`)
+- `just build-windows` -> `build/eye-care-reminder-windows-x64.msi` (Windows host
+  with the .NET SDK and `pwsh`; install WiX once with
+  `dotnet tool install --global wix --version 5.0.2` and
+  `wix extension add --global WixToolset.Util.wixext/5.0.2`)
 - `just clean` -> empties `build/` except `.keep`
 
 The version comes from the `VERSION` environment variable (default `0.0.0`).
@@ -56,7 +58,31 @@ suffixes such as `-rc1`.
   asked (reading from `/dev/tty`, suggesting `$XDG_CURRENT_DESKTOP`).
   `--de=` and `--prefix=` allow non-interactive installs.
 
-## Windows notes
+## Windows app
+
+- `src/windows/app` is a WinForms app without a main window, targeting
+  **.NET Framework 4.8** (preinstalled on Windows 10 1903+ / 11, so the MSI
+  needs no runtime). Keep it dependency-free (no NuGet packages).
+- `TrayApplicationContext` owns the tray icon (left click or "Settings..."
+  opens `SettingsForm`; menu also has "Take a break now" and "Exit") and a
+  timer that shows a notification every interval via
+  `NotifyIcon.ShowBalloonTip` (rendered as a toast in the bottom-right corner
+  on Windows 10/11). Unlocking the session restarts the interval.
+- Settings: `HKCU\Software\EyeCareReminder\IntervalMinutes` (DWORD, default
+  60, range 1-1440), see `Settings.cs`.
+- Single instance via a named mutex; launching the exe again signals the running
+  instance (named event) to open the settings dialog.
+- `NotifyIcon.Text` must stay <= 63 characters (throws otherwise on .NET Framework).
+- `EyeCareReminder.ico` uses BMP frames up to 64px and a PNG frame for 256px;
+  keep it that way (PNG-only frames break some icon loaders).
+
+## Windows installer notes
+
+- The MSI installs to `Program Files\Eye Care Reminder`, adds a Start menu
+  shortcut, registers autostart for all users
+  (`HKLM\...\CurrentVersion\Run`), closes a running instance before
+  upgrade/uninstall (`util:CloseApplication`) and launches the app after
+  installation.
 
 - The MSI is built with the WiX Toolset and is **not code-signed**. This is
   valid: the MSI installs normally, but Windows SmartScreen shows
@@ -69,7 +95,7 @@ suffixes such as `-rc1`.
 
 ## Releases
 
-`.github/workflows/build.yml` builds both installers on every push/PR. Pushing a
+`.github/workflows/build.yml` builds both installers on every push to any branch and on PRs. Pushing a
 tag `vX.Y.Z` additionally creates a GitHub release with both installers
 attached. Asset names are version-independent so the README can link to
 `releases/latest/download/<asset>`; do not rename them without updating the
