@@ -113,5 +113,5 @@ so repeated downloads don't overwrite each other; the README therefore links
 to the `releases/latest` page rather than to individual assets.
 
 ```bash
-git tag v1.0.0 && git push origin v1.0.0
+git pull && git tag v1.0.0 && git push origin v1.0.0
 ```
