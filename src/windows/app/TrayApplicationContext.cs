@@ -11,7 +11,7 @@ namespace EyeCareReminder
     /// </summary>
     internal sealed class TrayApplicationContext : ApplicationContext
     {
-        private const int NotificationTimeoutMs = 20000;
+        private const int NotificationTimeoutMs = 60000;
 
         private readonly NotifyIcon trayIcon;
         private readonly System.Windows.Forms.Timer reminderTimer;

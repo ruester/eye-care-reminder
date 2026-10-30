@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -8,7 +9,9 @@ namespace EyeCareReminder
     /// Small notification window in the bottom-right corner of the primary screen.
     /// Drawn by the app itself, so it shows regardless of the Windows notification
     /// settings (Do Not Disturb / Focus Assist suppress tray balloon notifications).
-    /// Closes on click or after a timeout and never takes the keyboard focus.
+    /// A bar at the bottom counts down the remaining time (full at first, shrinking
+    /// from right to left); the popup closes when it is empty or when clicked.
+    /// Never takes the keyboard focus.
     /// </summary>
     internal sealed class NotificationPopup : Form
     {
@@ -17,9 +20,15 @@ namespace EyeCareReminder
         private const int WS_EX_TOPMOST = 0x00000008;
         private const int WS_EX_NOACTIVATE = 0x08000000;
 
-        private static readonly Color AccentColor = Color.FromArgb(0, 137, 123);
+        private const int CountdownTickMs = 30;
 
-        private readonly Timer closeTimer;
+        private static readonly Color AccentColor = Color.FromArgb(0, 137, 123);
+        private static readonly Color CountdownTrackColor = Color.FromArgb(214, 236, 233);
+
+        private readonly int timeoutMs;
+        private readonly int countdownHeight;
+        private readonly Stopwatch elapsed = new Stopwatch();
+        private readonly Timer countdownTimer;
 
         public NotificationPopup(string title, string message, int timeoutMs)
         {
@@ -33,8 +42,12 @@ namespace EyeCareReminder
             ForeColor = SystemColors.WindowText;
             AutoSize = true;
             AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            // 1px border on every side: content starts at (1, 1), plus right/bottom padding.
-            Padding = new Padding(0, 0, 1, 1);
+            DoubleBuffered = true;
+            this.timeoutMs = timeoutMs;
+            countdownHeight = Math.Max(3, Font.Height / 4);
+            // 1px border on every side: content starts at (1, 1), plus right/bottom padding;
+            // the countdown bar sits in the extra bottom padding.
+            Padding = new Padding(0, 0, 1, 1 + countdownHeight);
             Cursor = Cursors.Hand;
 
             var layout = new TableLayoutPanel
@@ -91,8 +104,8 @@ namespace EyeCareReminder
             Controls.Add(layout);
             CloseOnClick(this);
 
-            closeTimer = new Timer { Interval = timeoutMs };
-            closeTimer.Tick += (s, e) => Close();
+            countdownTimer = new Timer { Interval = CountdownTickMs };
+            countdownTimer.Tick += OnCountdownTick;
         }
 
         // Show on top without stealing the focus from the window the user is working in.
@@ -113,7 +126,8 @@ namespace EyeCareReminder
             base.OnShown(e);
             var area = Screen.PrimaryScreen.WorkingArea;
             Location = new Point(area.Right - Width - ScreenMargin, area.Bottom - Height - ScreenMargin);
-            closeTimer.Start();
+            elapsed.Start();
+            countdownTimer.Start();
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -123,13 +137,36 @@ namespace EyeCareReminder
             {
                 e.Graphics.DrawRectangle(pen, 0, 0, Width - 1, Height - 1);
             }
+
+            var track = CountdownBounds;
+            double remaining = Math.Max(0.0, 1.0 - (double)elapsed.ElapsedMilliseconds / timeoutMs);
+            int filledWidth = (int)Math.Round(track.Width * remaining);
+            using (var trackBrush = new SolidBrush(CountdownTrackColor))
+            using (var barBrush = new SolidBrush(AccentColor))
+            {
+                e.Graphics.FillRectangle(trackBrush, track);
+                e.Graphics.FillRectangle(barBrush, track.X, track.Y, filledWidth, track.Height);
+            }
+        }
+
+        private Rectangle CountdownBounds => new Rectangle(1, Height - 1 - countdownHeight, Width - 2, countdownHeight);
+
+        private void OnCountdownTick(object sender, EventArgs e)
+        {
+            if (elapsed.ElapsedMilliseconds >= timeoutMs)
+            {
+                countdownTimer.Stop();
+                Close();
+                return;
+            }
+            Invalidate(CountdownBounds);
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                closeTimer.Dispose();
+                countdownTimer.Dispose();
             }
             base.Dispose(disposing);
         }

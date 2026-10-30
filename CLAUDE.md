@@ -75,7 +75,8 @@ suffixes such as `-rc1`.
   restarts the interval.
 - Notifications are drawn by the app itself (`NotificationPopup`: borderless,
   topmost, non-activating window in the bottom-right corner of the primary
-  screen's work area, closes on click or after 20 s). Do not switch back to
+  screen's work area, closes on click or after 60 s; a countdown bar at the
+  bottom shrinks from right to left until it closes). Do not switch back to
   `NotifyIcon.ShowBalloonTip`: Windows 10/11 silently drops those when Do Not
   Disturb / Focus Assist is on or app notifications are disabled.
 - Startup: the logon autostart entry passes `--autostart` and the app starts
