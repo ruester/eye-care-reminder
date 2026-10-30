@@ -5,9 +5,8 @@
 
 Eye Care Reminder is a lightweight desktop application for Windows and Linux that helps reduce eye strain during long periods of screen work. At a user-defined interval, it displays a desktop notification reminding you to look away from the screen and give your eyes a rest.
 
-**Downloads (latest release):**
-[Linux installer (.bin)](https://github.com/ruester/eye-care-reminder/releases/latest/download/eye-care-reminder-linux.bin) ·
-[Windows installer (.msi)](https://github.com/ruester/eye-care-reminder/releases/latest/download/eye-care-reminder-windows-x64.msi)
+**Downloads:** get the installers from the [latest release](https://github.com/ruester/eye-care-reminder/releases/latest):
+`eye-care-reminder-<version>-windows-x64.msi` for Windows and `eye-care-reminder-<version>-linux.bin` for Linux.
 
 ## Development
 
@@ -32,7 +31,7 @@ wix extension add --global WixToolset.Util.wixext/5.0.2
 wix extension add --global WixToolset.UI.wixext/5.0.2
 ```
 
-Build the installer (`build/eye-care-reminder-windows-x64.msi`):
+Build the installer (`build/eye-care-reminder-<version>-windows-x64.msi`):
 
 ```powershell
 just build-windows
@@ -51,7 +50,7 @@ Install `just` on Debian/Ubuntu (24.04 or later) with:
 sudo apt install just
 ```
 
-Build the installer (`build/eye-care-reminder-linux.bin`):
+Build the installer (`build/eye-care-reminder-<version>-linux.bin`):
 
 ```bash
 just build-linux

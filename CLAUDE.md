@@ -36,8 +36,8 @@ and must be added to `SUPPORTED`, the detection logic and the prompt in
 
 All builds go through `just` (`just --list` shows the recipes):
 
-- `just build-linux` -> `build/eye-care-reminder-linux.bin` (Linux/macOS host)
-- `just build-windows` -> `build/eye-care-reminder-windows-x64.msi` (Windows host
+- `just build-linux` -> `build/eye-care-reminder-<version>-linux.bin` (Linux/macOS host)
+- `just build-windows` -> `build/eye-care-reminder-<version>-windows-x64.msi` (Windows host
   with the .NET SDK and `pwsh`; install WiX once with
   `dotnet tool install --global wix --version 5.0.2` and
   `wix extension add --global WixToolset.Util.wixext/5.0.2` and
@@ -107,9 +107,10 @@ suffixes such as `-rc1`.
 
 `.github/workflows/build.yml` builds both installers on every push to any branch and on PRs. Pushing a
 tag `vX.Y.Z` additionally creates a GitHub release with both installers
-attached. Asset names are version-independent so the README can link to
-`releases/latest/download/<asset>`; do not rename them without updating the
-README.
+attached. Asset names contain the version
+(`eye-care-reminder-<version>-linux.bin`, `eye-care-reminder-<version>-windows-x64.msi`)
+so repeated downloads don't overwrite each other; the README therefore links
+to the `releases/latest` page rather than to individual assets.
 
 ```bash
 git tag v1.0.0 && git push origin v1.0.0

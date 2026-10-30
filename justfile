@@ -6,8 +6,8 @@ set windows-shell := ["pwsh", "-NoLogo", "-NoProfile", "-Command"]
 # Release version, e.g. VERSION=1.2.3 just build-linux. MSI requires x.y.z.
 version := env("VERSION", "0.0.0")
 
-linux_bin := "build/eye-care-reminder-linux.bin"
-windows_msi := "build/eye-care-reminder-windows-x64.msi"
+linux_bin := "build/eye-care-reminder-" + version + "-linux.bin"
+windows_msi := "build/eye-care-reminder-" + version + "-windows-x64.msi"
 
 # List available recipes
 default:

@@ -29,7 +29,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: linux-installer
-          path: build/eye-care-reminder-linux.bin
+          path: build/eye-care-reminder-*-linux.bin
           if-no-files-found: error
 
   windows:
@@ -55,7 +55,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: windows-installer
-          path: build/eye-care-reminder-windows-x64.msi
+          path: build/eye-care-reminder-*-windows-x64.msi
           if-no-files-found: error
 
   release:
@@ -73,6 +73,6 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/eye-care-reminder-linux.bin
-            dist/eye-care-reminder-windows-x64.msi
+            dist/eye-care-reminder-*-linux.bin
+            dist/eye-care-reminder-*-windows-x64.msi
           generate_release_notes: true
