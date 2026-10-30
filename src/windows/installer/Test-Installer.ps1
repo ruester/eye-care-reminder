@@ -17,7 +17,13 @@ $exe = Join-Path $env:ProgramFiles 'Eye Care Reminder\EyeCareReminder.exe'
 function Invoke-Msi([string]$Action, [string]$Msi, [string]$Log) {
     $process = Start-Process msiexec.exe -ArgumentList "$Action `"$Msi`" /qn /l*v `"$Log`"" -Wait -PassThru
     if ($process.ExitCode -ne 0) {
-        Get-Content $Log -Tail 60
+        # Show what failed: the lines leading up to the first failing action.
+        $failure = Select-String -Path $Log -Pattern 'Return value 3' | Select-Object -First 1
+        if ($failure) {
+            Get-Content $Log | Select-Object -Skip ([Math]::Max(0, $failure.LineNumber - 40)) -First 42
+        } else {
+            Get-Content $Log -Tail 60
+        }
         throw "msiexec $Action $Msi failed with exit code $($process.ExitCode) (3010 = reboot required)"
     }
 }
