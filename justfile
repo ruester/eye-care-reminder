@@ -1,5 +1,5 @@
 # Eye Care Reminder build recipes.
-# Release artifacts are written to build/ (ignored by git except build/.keep).
+# Release artifacts are written to build/ (created on demand, ignored by git).
 
 set windows-shell := ["pwsh", "-NoLogo", "-NoProfile", "-Command"]
 
@@ -43,12 +43,12 @@ test-windows:
     dotnet test src/windows/tests/EyeCareReminder.Tests.csproj -c Debug --collect "Code Coverage" --settings src/windows/tests/coverage.runsettings --results-directory build/test-results
     ./src/windows/tests/Get-Coverage.ps1 -ResultsDir build/test-results
 
-# Remove all build artifacts (keeps build/.keep)
+# Remove all build artifacts
 [unix]
 clean:
-    find build -mindepth 1 ! -name .keep -exec rm -rf {} +
+    rm -rf build
 
-# Remove all build artifacts (keeps build/.keep)
+# Remove all build artifacts
 [windows]
 clean:
-    Get-ChildItem build -Force -Exclude .keep | Remove-Item -Recurse -Force
+    if (Test-Path build) { Remove-Item -Recurse -Force build }

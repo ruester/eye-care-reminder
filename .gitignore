@@ -1,6 +1,5 @@
-# Build artifacts (keep the directory itself)
-build/*
-!build/.keep
+# Build artifacts (the directory is created by the just recipes)
+/build/
 
 # .NET build output
 bin/

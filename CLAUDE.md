@@ -24,7 +24,7 @@ src/
     app/           C# WinForms tray app (.NET Framework 4.8, EyeCareReminder.csproj)
     installer/     Package.wxs (WiX Toolset v5 source for the MSI)
     tests/         xunit unit tests for the app's helpers (EyeCareReminder.Tests.csproj)
-build/             build output; only build/.keep is tracked
+build/             build output; created by the just recipes, not tracked
 justfile           all build recipes
 .github/workflows/build.yml   CI + GitHub release publishing
 ```
@@ -45,7 +45,7 @@ All builds go through `just` (`just --list` shows the recipes):
   `wix extension add --global WixToolset.UI.wixext/5.0.2`)
 - `just test-windows` -> runs the Windows unit tests with line coverage
   (Cobertura report in `build/test-results`, Windows host with the .NET SDK)
-- `just clean` -> empties `build/` except `.keep`
+- `just clean` -> deletes `build/`
 
 The version comes from the `VERSION` environment variable (default `0.0.0`).
 It must be numeric `major.minor.patch` because MSI versions do not allow
