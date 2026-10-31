@@ -156,12 +156,11 @@ suffixes such as `-rc1`.
 ## Website
 
 - `site/` is a static landing page (no build step, no framework):
-  `index.html`, `style.css`, `script.js`, `logo.svg` (vector copy of the app
+  `index.html`, `style.css`, `logo.svg` (vector copy of the app
   icon) and PNG icons. Its colours match the Windows app (`#00897B` accent,
   `#26A69A`, `#D6ECE9` countdown track, `#142128`); it supports dark mode.
-- `script.js` asks the GitHub API for the latest release to link the `.msi`
-  directly and show the version; without it the buttons link to
-  `releases/latest`. Keep the page truthful: Linux is shown as "in development"
+- The download buttons link directly to the `.msi` of `release_version`
+  (updated by `just release`, see Releases). Keep the page truthful: Linux is shown as "in development"
   until the Linux app exists.
 - `.github/workflows/pages.yml` deploys `site/` on pushes to `main` that touch
   it. It is skipped while the repository is private (Pages needs a paid plan
@@ -176,9 +175,15 @@ suffixes such as `-rc1`.
 tag `vX.Y.Z` additionally creates a GitHub release with both installers
 attached. Asset names contain the version
 (`eye-care-reminder-<version>-linux.bin`, `eye-care-reminder-<version>-windows-x64.msi`)
-so repeated downloads don't overwrite each other; the README therefore links
-to the `releases/latest` page rather than to individual assets.
+so repeated downloads don't overwrite each other.
+
+`release_version` in the justfile is the latest published release. The README
+and `site/index.html` link directly to that release's installers
+(`releases/download/vX.Y.Z/...`) and show its version. Release only with the
+recipe, which bumps `release_version` and these links, commits
+"Release vX.Y.Z", tags and pushes main and the tag (CI fails a tag that doesn't
+match `release_version`):
 
 ```bash
-git pull && git tag v1.0.0 && git push origin v1.0.0
+just release 1.0.0
 ```

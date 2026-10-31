@@ -28,6 +28,14 @@ jobs:
           else
             echo "VERSION=0.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
           fi
+      - name: Check that the tag matches release_version in the justfile
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          expected="$(just --evaluate release_version)"
+          if [[ "$VERSION" != "$expected" ]]; then
+            echo "::error::Tag v$VERSION doesn't match release_version $expected in the justfile. Release with: just release $VERSION"
+            exit 1
+          fi
       - run: just build-linux
       - uses: actions/upload-artifact@v4
         with:

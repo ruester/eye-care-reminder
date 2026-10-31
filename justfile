@@ -3,7 +3,11 @@
 
 set windows-shell := ["pwsh", "-NoLogo", "-NoProfile", "-Command"]
 
-# Release version, e.g. VERSION=1.2.3 just build-linux. MSI requires x.y.z.
+# Latest published release. `just release X.Y.Z` bumps it together with the
+# download links in README.md and site/index.html; CI checks that a pushed tag matches.
+release_version := "0.1.5"
+
+# Version stamped into builds, e.g. VERSION=1.2.3 just build-linux. MSI requires x.y.z.
 version := env("VERSION", "0.0.0")
 
 linux_bin := "build/eye-care-reminder-" + version + "-linux.bin"
@@ -42,6 +46,29 @@ test-windows:
     if (Test-Path build/test-results) { Remove-Item -Recurse -Force build/test-results }
     dotnet test src/windows/tests/EyeCareReminder.Tests.csproj -c Debug --collect "Code Coverage" --settings src/windows/tests/coverage.runsettings --results-directory build/test-results
     ./src/windows/tests/Get-Coverage.ps1 -ResultsDir build/test-results
+
+# Release a new version: bump release_version and the download links, commit, tag and push
+[unix]
+release new_version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    new="{{new_version}}"
+    [[ "$new" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Version must be major.minor.patch, e.g. 1.0.0" >&2; exit 1; }
+    [[ "$(git branch --show-current)" == main ]] || { echo "Releases are made from main" >&2; exit 1; }
+    [[ -z "$(git status --porcelain)" ]] || { echo "Commit or stash your changes first" >&2; exit 1; }
+    git pull --ff-only
+    old="$(just --evaluate release_version)"
+    [[ "$old" != "$new" ]] || { echo "Version $new is already the current release" >&2; exit 1; }
+    old_re="${old//./\\.}"
+    sed -i.bak -E "s/^release_version := \"$old_re\"/release_version := \"$new\"/" justfile
+    for file in README.md site/index.html; do
+        sed -i.bak -E -e "s#/download/v$old_re/#/download/v$new/#g" -e "s/eye-care-reminder-$old_re-/eye-care-reminder-$new-/g" -e "s/([Vv]ersion )$old_re/\1$new/g" "$file"
+    done
+    rm -f justfile.bak README.md.bak site/index.html.bak
+    git commit -q -am "Release v$new"
+    git tag "v$new"
+    git push origin main "v$new"
+    echo "Released v$new: GitHub Actions now builds the installers and publishes the release."
 
 # Remove all build artifacts
 [unix]

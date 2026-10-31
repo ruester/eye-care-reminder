@@ -7,8 +7,7 @@
 
 Eye Care Reminder is a lightweight desktop application for Windows and Linux that helps reduce eye strain during long periods of screen work. At a user-defined interval, it displays a desktop notification reminding you to look away from the screen and give your eyes a rest.
 
-**Downloads:** get the installers from the [latest release](https://github.com/ruester/eye-care-reminder/releases/latest):
-`eye-care-reminder-<version>-windows-x64.msi` for Windows and `eye-care-reminder-<version>-linux.bin` for Linux.
+**Downloads (version 0.1.5):** [Windows installer (.msi)](https://github.com/ruester/eye-care-reminder/releases/download/v0.1.5/eye-care-reminder-0.1.5-windows-x64.msi) · [Linux installer (.bin)](https://github.com/ruester/eye-care-reminder/releases/download/v0.1.5/eye-care-reminder-0.1.5-linux.bin) · [all releases](https://github.com/ruester/eye-care-reminder/releases)
 
 ## Development
 
