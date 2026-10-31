@@ -75,16 +75,19 @@ suffixes such as `-rc1`.
   restarts the interval.
 - Notifications are drawn by the app itself (`NotificationPopup`: borderless,
   topmost, non-activating window in the bottom-right corner of the primary
-  screen's work area, closes on click or after 60 s; a countdown bar at the
-  bottom shrinks from right to left until it closes). Do not switch back to
+  screen's work area, closes on click; with auto-hide enabled it also closes
+  after the configured time and a countdown bar at the bottom shrinks from
+  right to left until it closes). Do not switch back to
   `NotifyIcon.ShowBalloonTip`: Windows 10/11 silently drops those when Do Not
   Disturb / Focus Assist is on or app notifications are disabled.
 - Startup: the logon autostart entry passes `--autostart` and the app starts
   silently in the tray. Any other launch (Start menu, installer's "Launch"
   checkbox) opens the settings dialog so the user sees that the app is running
   (Windows 11 hides new tray icons in the overflow by default).
-- Settings: `HKCU\Software\EyeCareReminder\IntervalMinutes` (DWORD, default
-  60, range 1-1440), see `Settings.cs`.
+- Settings (DWORDs under `HKCU\Software\EyeCareReminder`, see `Settings.cs`):
+  `IntervalMinutes` (default 60, range 1-1440), `AutoHide` (0/1, default 1)
+  and `AutoHideSeconds` (default 60, range 1-300). "Test notification" uses
+  the auto-hide values currently entered in the dialog, even if unsaved.
 - Single instance via a named mutex; launching the exe again signals the running
   instance (named event) to open the settings dialog.
 - `NotifyIcon.Text` must stay <= 63 characters (throws otherwise on .NET Framework).

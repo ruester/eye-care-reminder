@@ -9,8 +9,15 @@ namespace EyeCareReminder
         public const int MinIntervalMinutes = 1;
         public const int MaxIntervalMinutes = 24 * 60;
 
+        public const bool DefaultAutoHide = true;
+        public const int DefaultAutoHideSeconds = 60;
+        public const int MinAutoHideSeconds = 1;
+        public const int MaxAutoHideSeconds = 5 * 60;
+
         private const string KeyPath = @"Software\EyeCareReminder";
         private const string IntervalValueName = "IntervalMinutes";
+        private const string AutoHideValueName = "AutoHide";
+        private const string AutoHideSecondsValueName = "AutoHideSeconds";
 
         public static bool Exists()
         {
@@ -20,24 +27,39 @@ namespace EyeCareReminder
             }
         }
 
-        public static int LoadIntervalMinutes()
+        public static int LoadIntervalMinutes() =>
+            LoadDword(IntervalValueName, MinIntervalMinutes, MaxIntervalMinutes, DefaultIntervalMinutes);
+
+        public static void SaveIntervalMinutes(int minutes) => SaveDword(IntervalValueName, minutes);
+
+        public static bool LoadAutoHide() => LoadDword(AutoHideValueName, 0, 1, DefaultAutoHide ? 1 : 0) == 1;
+
+        public static int LoadAutoHideSeconds() =>
+            LoadDword(AutoHideSecondsValueName, MinAutoHideSeconds, MaxAutoHideSeconds, DefaultAutoHideSeconds);
+
+        public static void SaveAutoHide(bool enabled, int seconds)
+        {
+            SaveDword(AutoHideValueName, enabled ? 1 : 0);
+            SaveDword(AutoHideSecondsValueName, seconds);
+        }
+
+        private static int LoadDword(string name, int min, int max, int defaultValue)
         {
             using (var key = Registry.CurrentUser.OpenSubKey(KeyPath))
             {
-                if (key?.GetValue(IntervalValueName) is int minutes
-                    && minutes >= MinIntervalMinutes && minutes <= MaxIntervalMinutes)
+                if (key?.GetValue(name) is int value && value >= min && value <= max)
                 {
-                    return minutes;
+                    return value;
                 }
             }
-            return DefaultIntervalMinutes;
+            return defaultValue;
         }
 
-        public static void SaveIntervalMinutes(int minutes)
+        private static void SaveDword(string name, int value)
         {
             using (var key = Registry.CurrentUser.CreateSubKey(KeyPath))
             {
-                key.SetValue(IntervalValueName, minutes, RegistryValueKind.DWord);
+                key.SetValue(name, value, RegistryValueKind.DWord);
             }
         }
     }

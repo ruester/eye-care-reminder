@@ -30,6 +30,8 @@ namespace EyeCareReminder
         private readonly Stopwatch elapsed = new Stopwatch();
         private readonly Timer countdownTimer;
 
+        /// <param name="timeoutMs">Closes the popup after this time and shows a countdown bar;
+        /// 0 keeps it open until it is clicked.</param>
         public NotificationPopup(string title, string message, int timeoutMs)
         {
             FormBorderStyle = FormBorderStyle.None;
@@ -44,7 +46,7 @@ namespace EyeCareReminder
             AutoSizeMode = AutoSizeMode.GrowAndShrink;
             DoubleBuffered = true;
             this.timeoutMs = timeoutMs;
-            countdownHeight = Math.Max(3, Font.Height / 4);
+            countdownHeight = timeoutMs > 0 ? Math.Max(3, Font.Height / 4) : 0;
             // 1px border on every side: content starts at (1, 1), plus right/bottom padding;
             // the countdown bar sits in the extra bottom padding.
             Padding = new Padding(0, 0, 1, 1 + countdownHeight);
@@ -126,8 +128,11 @@ namespace EyeCareReminder
             base.OnShown(e);
             var area = Screen.PrimaryScreen.WorkingArea;
             Location = new Point(area.Right - Width - ScreenMargin, area.Bottom - Height - ScreenMargin);
-            elapsed.Start();
-            countdownTimer.Start();
+            if (timeoutMs > 0)
+            {
+                elapsed.Start();
+                countdownTimer.Start();
+            }
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -136,6 +141,11 @@ namespace EyeCareReminder
             using (var pen = new Pen(AccentColor))
             {
                 e.Graphics.DrawRectangle(pen, 0, 0, Width - 1, Height - 1);
+            }
+
+            if (timeoutMs <= 0)
+            {
+                return;
             }
 
             var track = CountdownBounds;

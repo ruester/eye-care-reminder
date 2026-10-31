@@ -11,12 +11,12 @@ namespace EyeCareReminder
     /// </summary>
     internal sealed class TrayApplicationContext : ApplicationContext
     {
-        private const int NotificationTimeoutMs = 60000;
-
         private readonly NotifyIcon trayIcon;
         private readonly System.Windows.Forms.Timer reminderTimer;
         private readonly RegisteredWaitHandle showSettingsRegistration;
         private int intervalMinutes;
+        private bool autoHide;
+        private int autoHideSeconds;
         private SettingsForm settingsForm;
         private NotificationPopup popup;
 
@@ -24,9 +24,12 @@ namespace EyeCareReminder
         {
             bool isFirstRun = !Settings.Exists();
             intervalMinutes = Settings.LoadIntervalMinutes();
+            autoHide = Settings.LoadAutoHide();
+            autoHideSeconds = Settings.LoadAutoHideSeconds();
             if (isFirstRun)
             {
                 Settings.SaveIntervalMinutes(intervalMinutes);
+                Settings.SaveAutoHide(autoHide, autoHideSeconds);
             }
 
             var menu = new ContextMenuStrip();
@@ -83,16 +86,22 @@ namespace EyeCareReminder
             RestartTimer();
         }
 
-        private void ShowBreakNotification()
+        private void ShowBreakNotification() => ShowBreakNotification(autoHide ? autoHideSeconds : 0);
+
+        private void ShowBreakNotification(int hideAfterSeconds)
         {
             ShowPopup("Time for an eye break",
-                "Look at something at least 6 metres (20 feet) away for 20 seconds and blink a few times.");
+                "Look at something at least 6 metres (20 feet) away for 20 seconds and blink a few times.",
+                hideAfterSeconds);
         }
 
-        private void ShowPopup(string title, string message)
+        private void ShowPopup(string title, string message) => ShowPopup(title, message, autoHide ? autoHideSeconds : 0);
+
+        /// <param name="hideAfterSeconds">0 keeps the popup open until it is clicked.</param>
+        private void ShowPopup(string title, string message, int hideAfterSeconds)
         {
             popup?.Close();
-            popup = new NotificationPopup(title, message, NotificationTimeoutMs);
+            popup = new NotificationPopup(title, message, hideAfterSeconds * 1000);
             popup.FormClosed += (s, e) =>
             {
                 if (s == popup)
@@ -112,12 +121,15 @@ namespace EyeCareReminder
                 return;
             }
 
-            using (settingsForm = new SettingsForm(intervalMinutes, ShowBreakNotification))
+            using (settingsForm = new SettingsForm(intervalMinutes, autoHide, autoHideSeconds, ShowBreakNotification))
             {
                 if (settingsForm.ShowDialog() == DialogResult.OK)
                 {
                     intervalMinutes = settingsForm.IntervalMinutes;
+                    autoHide = settingsForm.AutoHide;
+                    autoHideSeconds = settingsForm.AutoHideSeconds;
                     Settings.SaveIntervalMinutes(intervalMinutes);
+                    Settings.SaveAutoHide(autoHide, autoHideSeconds);
                     RestartTimer();
                 }
             }
