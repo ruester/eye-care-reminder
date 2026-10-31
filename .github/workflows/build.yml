@@ -54,6 +54,7 @@ jobs:
       - run: just build-windows
       - name: Test installer (upgrade and uninstall while the app is running)
         shell: pwsh
+        timeout-minutes: 10
         run: |
           $new = (Resolve-Path "build/eye-care-reminder-$env:VERSION-windows-x64.msi").Path
           $expected = $env:VERSION

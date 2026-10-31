@@ -14,7 +14,12 @@ param(
 $ErrorActionPreference = 'Stop'
 $exe = Join-Path $env:ProgramFiles 'Eye Care Reminder\EyeCareReminder.exe'
 
+function Write-Step([string]$Message) {
+    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] $Message"
+}
+
 function Invoke-Msi([string]$Action, [string]$Msi, [string]$Log) {
+    Write-Step "msiexec $Action $Msi"
     $process = Start-Process msiexec.exe -ArgumentList "$Action `"$Msi`" /qn /l*v `"$Log`"" -Wait -PassThru
     if ($process.ExitCode -ne 0) {
         # Show what failed: the lines leading up to the first failing action.
@@ -29,6 +34,7 @@ function Invoke-Msi([string]$Action, [string]$Msi, [string]$Log) {
 }
 
 function Start-App {
+    Write-Step "Starting $exe"
     Start-Process $exe -ArgumentList '--autostart'
     Start-Sleep -Seconds 3
     Assert-AppRunning $true
@@ -44,11 +50,11 @@ function Get-InstalledProducts {
         Where-Object { $_.DisplayName -eq 'Eye Care Reminder' })
 }
 
-Write-Host "Installing $OldMsi"
+Write-Step "Installing $OldMsi"
 Invoke-Msi '/i' $OldMsi 'install-old.log'
 Start-App
 
-Write-Host "Upgrading to $NewMsi while the app is running"
+Write-Step "Upgrading to $NewMsi while the app is running"
 Invoke-Msi '/i' $NewMsi 'upgrade.log'
 Assert-AppRunning $false
 $products = Get-InstalledProducts
@@ -56,11 +62,11 @@ if ($products.Count -ne 1) { throw "Expected 1 installed product after upgrade, 
 $fileVersion = (Get-Item $exe).VersionInfo.FileVersion
 if (-not $fileVersion.StartsWith($ExpectedVersion)) { throw "Expected version $ExpectedVersion, installed $fileVersion" }
 
-Write-Host "Uninstalling while the app is running"
+Write-Step 'Uninstalling while the app is running'
 Start-App
 Invoke-Msi '/x' $NewMsi 'uninstall.log'
 Assert-AppRunning $false
 if (Test-Path $exe) { throw "$exe still exists after uninstall" }
 if ((Get-InstalledProducts).Count -ne 0) { throw 'Product still registered after uninstall' }
 
-Write-Host 'Installer test passed'
+Write-Step 'Installer test passed'
