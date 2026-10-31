@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Same shapes and colours as src/windows/app/EyeCareReminder.ico -->
+  <defs><clipPath id="tile"><rect x="40" y="40" width="944" height="944" rx="220"/></clipPath></defs>
+  <rect x="40" y="40" width="944" height="944" rx="220" fill="#00897B"/>
+  <path clip-path="url(#tile)" fill="#fff" d="M-41.2 512A620 620 0 0 1 1065.2 512A620 620 0 0 1-41.2 512Z"/>
+  <circle cx="512" cy="512" r="190" fill="#26A69A"/>
+  <circle cx="512" cy="512" r="95" fill="#142128"/>
+  <circle cx="569.5" cy="429.5" r="37.5" fill="#fff"/>
+</svg>

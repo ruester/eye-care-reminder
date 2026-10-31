@@ -4,7 +4,10 @@ on:
   push:
     branches: ["**"]
     tags: ["v*.*.*"]
+    # The website is deployed by pages.yml; no need to rebuild the installers for it.
+    paths-ignore: ["site/**", ".github/workflows/pages.yml"]
   pull_request:
+    paths-ignore: ["site/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:

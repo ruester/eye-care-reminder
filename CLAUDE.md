@@ -24,6 +24,7 @@ src/
     app/           C# WinForms tray app (.NET Framework 4.8, EyeCareReminder.csproj)
     installer/     Package.wxs (WiX Toolset v5 source for the MSI)
     tests/         xunit unit tests for the app's helpers (EyeCareReminder.Tests.csproj)
+site/              landing page (static HTML/CSS/JS), deployed to GitHub Pages
 build/             build output; created by the just recipes, not tracked
 justfile           all build recipes
 .github/workflows/build.yml   CI + GitHub release publishing
@@ -146,6 +147,23 @@ suffixes such as `-rc1`.
   later as a `signtool` step after `wix build`.
 - Keep `UpgradeCode` in `Package.wxs` unchanged forever; it links versions for
   major upgrades.
+
+## Website
+
+- `site/` is a static landing page (no build step, no framework):
+  `index.html`, `style.css`, `script.js`, `logo.svg` (vector copy of the app
+  icon) and PNG icons. Its colours match the Windows app (`#00897B` accent,
+  `#26A69A`, `#D6ECE9` countdown track, `#142128`); it supports dark mode.
+- `script.js` asks the GitHub API for the latest release to link the `.msi`
+  directly and show the version; without it the buttons link to
+  `releases/latest`. Keep the page truthful: Linux is shown as "in development"
+  until the Linux app exists.
+- `.github/workflows/pages.yml` deploys `site/` on pushes to `main` that touch
+  it. It is skipped while the repository is private (Pages needs a paid plan
+  for private repos). After making the repo public, set Settings -> Pages ->
+  Source to "GitHub Actions" and run the workflow once; the site is then at
+  https://ruester.github.io/eye-care-reminder/.
+- `build.yml` ignores changes that only touch the site.
 
 ## Releases
 
