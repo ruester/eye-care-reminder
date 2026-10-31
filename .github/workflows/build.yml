@@ -35,6 +35,8 @@ jobs:
   windows:
     name: Windows installer (.msi)
     runs-on: windows-latest
+    permissions:
+      contents: write # push the coverage badge to the badges branch
     steps:
       - uses: actions/checkout@v4
       - uses: extractions/setup-just@v2
@@ -51,6 +53,32 @@ jobs:
           else
             echo "VERSION=0.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
           fi
+      - name: Unit tests with coverage
+        run: just test-windows
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-test-results
+          path: build/test-results
+          if-no-files-found: ignore
+      - name: Publish coverage badge
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # The badges branch holds only the latest badge (single force-pushed commit).
+          # Pushes made with GITHUB_TOKEN don't trigger workflows.
+          $percent = [int](Get-Content build/test-results/coverage-percent.txt)
+          $color = if ($percent -ge 80) { "brightgreen" } elseif ($percent -ge 60) { "green" } `
+                   elseif ($percent -ge 40) { "yellow" } elseif ($percent -ge 20) { "orange" } else { "red" }
+          $dir = Join-Path $env:RUNNER_TEMP badges
+          New-Item -ItemType Directory $dir | Out-Null
+          Invoke-WebRequest "https://img.shields.io/badge/windows%20coverage-$percent%25-$color" -OutFile "$dir/windows-coverage.svg"
+          git -C $dir init -q -b badges
+          git -C $dir add windows-coverage.svg
+          git -C $dir -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "Windows coverage $percent% ($env:GITHUB_SHA)"
+          git -C $dir push -q -f "https://x-access-token:$env:GH_TOKEN@github.com/$env:GITHUB_REPOSITORY.git" HEAD:badges
       - run: just build-windows
       - name: Test installer (upgrade and uninstall while the app is running)
         shell: pwsh

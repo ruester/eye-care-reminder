@@ -2,6 +2,8 @@
 
 [![Build](https://github.com/ruester/eye-care-reminder/actions/workflows/build.yml/badge.svg)](https://github.com/ruester/eye-care-reminder/actions/workflows/build.yml)
 [![Releases](https://img.shields.io/badge/releases-download-blue)](https://github.com/ruester/eye-care-reminder/releases/latest)
+[![Windows coverage](https://github.com/ruester/eye-care-reminder/raw/badges/windows-coverage.svg)](https://github.com/ruester/eye-care-reminder/actions/workflows/build.yml)
+[![Linux coverage](https://img.shields.io/badge/linux%20coverage-n%2Fa-lightgrey)](#linux)
 
 Eye Care Reminder is a lightweight desktop application for Windows and Linux that helps reduce eye strain during long periods of screen work. At a user-defined interval, it displays a desktop notification reminding you to look away from the screen and give your eyes a rest.
 
@@ -35,6 +37,12 @@ Build the installer (`build/eye-care-reminder-<version>-windows-x64.msi`):
 
 ```powershell
 just build-windows
+```
+
+Run the unit tests with line coverage (report in `build/test-results`):
+
+```powershell
+just test-windows
 ```
 
 ### Linux

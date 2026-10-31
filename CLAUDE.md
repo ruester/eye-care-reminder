@@ -23,6 +23,7 @@ src/
   windows/
     app/           C# WinForms tray app (.NET Framework 4.8, EyeCareReminder.csproj)
     installer/     Package.wxs (WiX Toolset v5 source for the MSI)
+    tests/         xunit unit tests for the app's helpers (EyeCareReminder.Tests.csproj)
 build/             build output; only build/.keep is tracked
 justfile           all build recipes
 .github/workflows/build.yml   CI + GitHub release publishing
@@ -42,6 +43,8 @@ All builds go through `just` (`just --list` shows the recipes):
   `dotnet tool install --global wix --version 5.0.2` and
   `wix extension add --global WixToolset.Util.wixext/5.0.2` and
   `wix extension add --global WixToolset.UI.wixext/5.0.2`)
+- `just test-windows` -> runs the Windows unit tests with line coverage
+  (Cobertura report in `build/test-results`, Windows host with the .NET SDK)
 - `just clean` -> empties `build/` except `.keep`
 
 The version comes from the `VERSION` environment variable (default `0.0.0`).
@@ -94,6 +97,25 @@ suffixes such as `-rc1`.
 - `EyeCareReminder.ico` uses BMP frames up to 64px and a PNG frame for 256px;
   keep it that way (PNG-only frames break some icon loaders).
 
+## Windows unit tests
+
+- `src/windows/tests` tests the app's helpers, not the UI: `TimeFormat`
+  (interval texts, tray tooltip <= 63 chars), `Countdown` (popup countdown
+  bar), `Settings` (defaults, ranges, round trip) and
+  `Program.ShouldOpenSettings`. Put new logic into such UI-free helpers so it
+  can be tested; the app exposes internals via `InternalsVisibleTo`.
+- The test project may use NuGet packages (xunit, Microsoft.NET.Test.Sdk);
+  the app itself stays dependency-free.
+- `SettingsTests` sets `Settings.KeyPath` to a throwaway key below
+  `HKCU\Software\EyeCareReminder.Tests` and deletes it afterwards.
+- Coverage uses Microsoft Code Coverage (`coverage.runsettings`, limited to
+  `EyeCareReminder.exe`), so it is measured over the whole app including UI code.
+  Tests run in Debug because Release builds have no PDBs.
+- Coverage badge: on pushes to `main` the CI Windows job renders
+  `windows-coverage.svg` and force-pushes it as the only commit of the
+  CI-managed `badges` branch (do not delete it or work on it). The Linux
+  coverage badge in the README is static (`n/a`) until there is Linux code.
+
 ## Windows installer notes
 
 - The MSI installs to `Program Files\Eye Care Reminder`, adds a Start menu
@@ -127,7 +149,7 @@ suffixes such as `-rc1`.
 
 ## Releases
 
-`.github/workflows/build.yml` builds both installers on every push to any branch and on PRs. Pushing a
+`.github/workflows/build.yml` runs the Windows unit tests and builds both installers on every push to any branch and on PRs. Pushing a
 tag `vX.Y.Z` additionally creates a GitHub release with both installers
 attached. Asset names contain the version
 (`eye-care-reminder-<version>-linux.bin`, `eye-care-reminder-<version>-windows-x64.msi`)

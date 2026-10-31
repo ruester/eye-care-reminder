@@ -14,7 +14,8 @@ namespace EyeCareReminder
         public const int MinAutoHideSeconds = 1;
         public const int MaxAutoHideSeconds = 5 * 60;
 
-        private const string KeyPath = @"Software\EyeCareReminder";
+        /// <summary>Registry key below HKCU; tests point it to a separate key.</summary>
+        internal static string KeyPath { get; set; } = @"Software\EyeCareReminder";
         private const string IntervalValueName = "IntervalMinutes";
         private const string AutoHideValueName = "AutoHide";
         private const string AutoHideSecondsValueName = "AutoHideSeconds";

@@ -21,6 +21,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="EyeCareReminder.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="EyeCareReminder.ico" LogicalName="EyeCareReminder.ico" />
   </ItemGroup>
 

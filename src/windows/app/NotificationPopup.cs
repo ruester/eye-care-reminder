@@ -149,8 +149,7 @@ namespace EyeCareReminder
             }
 
             var track = CountdownBounds;
-            double remaining = Math.Max(0.0, 1.0 - (double)elapsed.ElapsedMilliseconds / timeoutMs);
-            int filledWidth = (int)Math.Round(track.Width * remaining);
+            int filledWidth = Countdown.BarWidth(track.Width, elapsed.ElapsedMilliseconds, timeoutMs);
             using (var trackBrush = new SolidBrush(CountdownTrackColor))
             using (var barBrush = new SolidBrush(AccentColor))
             {

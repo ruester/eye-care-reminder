@@ -70,7 +70,7 @@ namespace EyeCareReminder
             if (isFirstRun)
             {
                 ShowPopup("Eye Care Reminder is running",
-                    $"You will be reminded to rest your eyes every {FormatInterval(intervalMinutes)}. "
+                    $"You will be reminded to rest your eyes every {TimeFormat.Interval(intervalMinutes)}. "
                     + "Click the eye icon in the notification area to change the interval.");
             }
 
@@ -142,8 +142,7 @@ namespace EyeCareReminder
             reminderTimer.Interval = intervalMinutes * 60 * 1000;
             reminderTimer.Start();
 
-            // NotifyIcon.Text is limited to 63 characters.
-            trayIcon.Text = $"Eye Care Reminder\nNext break at {DateTime.Now.AddMinutes(intervalMinutes):t}";
+            trayIcon.Text = TimeFormat.TrayText(DateTime.Now.AddMinutes(intervalMinutes));
         }
 
         private void OnSessionSwitch(object sender, SessionSwitchEventArgs e)
@@ -152,16 +151,6 @@ namespace EyeCareReminder
             {
                 RestartTimer();
             }
-        }
-
-        private static string FormatInterval(int minutes)
-        {
-            if (minutes % 60 == 0)
-            {
-                int hours = minutes / 60;
-                return hours == 1 ? "hour" : $"{hours} hours";
-            }
-            return minutes == 1 ? "minute" : $"{minutes} minutes";
         }
 
         protected override void ExitThreadCore()

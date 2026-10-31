@@ -12,6 +12,12 @@ namespace EyeCareReminder
         /// <summary>Passed by the logon autostart entry: start silently in the tray.</summary>
         private const string AutostartArgument = "--autostart";
 
+        /// <summary>
+        /// Started by the user (Start menu, installer) rather than at logon: open the
+        /// settings so the user sees that the app is running.
+        /// </summary>
+        internal static bool ShouldOpenSettings(string[] args) => Array.IndexOf(args, AutostartArgument) < 0;
+
         [STAThread]
         private static void Main(string[] args)
         {
@@ -38,9 +44,7 @@ namespace EyeCareReminder
 
                 using (var showSettings = new EventWaitHandle(false, EventResetMode.AutoReset, ShowSettingsEventName))
                 {
-                    // Started by the user (Start menu, installer): open the settings so the app is visible.
-                    bool openSettings = Array.IndexOf(args, AutostartArgument) < 0;
-                    Application.Run(new TrayApplicationContext(showSettings, openSettings));
+                    Application.Run(new TrayApplicationContext(showSettings, ShouldOpenSettings(args)));
                 }
             }
         }

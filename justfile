@@ -36,6 +36,13 @@ build-windows:
     wix build src/windows/installer/Package.wxs -arch x64 -ext WixToolset.Util.wixext -ext WixToolset.UI.wixext -d Version={{version}} -bindpath payload=build/windows/payload -o {{windows_msi}}
     Write-Host "Built {{windows_msi}} (version {{version}})"
 
+# Run the Windows unit tests with line coverage (report in build/test-results)
+[windows]
+test-windows:
+    if (Test-Path build/test-results) { Remove-Item -Recurse -Force build/test-results }
+    dotnet test src/windows/tests/EyeCareReminder.Tests.csproj -c Debug --collect "Code Coverage" --settings src/windows/tests/coverage.runsettings --results-directory build/test-results
+    ./src/windows/tests/Get-Coverage.ps1 -ResultsDir build/test-results
+
 # Remove all build artifacts (keeps build/.keep)
 [unix]
 clean:
