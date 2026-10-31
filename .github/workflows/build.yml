@@ -74,7 +74,7 @@ jobs:
                    elseif ($percent -ge 40) { "yellow" } elseif ($percent -ge 20) { "orange" } else { "red" }
           $dir = Join-Path $env:RUNNER_TEMP badges
           New-Item -ItemType Directory $dir | Out-Null
-          Invoke-WebRequest "https://img.shields.io/badge/windows%20coverage-$percent%25-$color" -OutFile "$dir/windows-coverage.svg"
+          Invoke-WebRequest "https://img.shields.io/badge/Windows%20unit%20test%20coverage-$percent%25-$color" -OutFile "$dir/windows-coverage.svg"
           git -C $dir init -q -b badges
           git -C $dir add windows-coverage.svg
           git -C $dir -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "Windows coverage $percent% ($env:GITHUB_SHA)"
