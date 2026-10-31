@@ -1,0 +1,55 @@
+name: Release
+
+# Start from the Actions tab ("Release" -> "Run workflow") or with
+# `gh workflow run release.yml -f version=1.0.0`. It sets the version everywhere,
+# commits "Release vX.Y.Z" to main, tags it and starts the Build workflow for the
+# tag, which builds both installers and publishes the GitHub release.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (major.minor.patch, e.g. 1.0.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write # push the release commit and tag
+  actions: write # start the Build workflow
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Set version, tag and start the release build
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: extractions/setup-just@v2
+      - name: Check that the tag doesn't exist yet
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" > /dev/null; then
+            echo "::error::Tag v$VERSION already exists"
+            exit 1
+          fi
+      - name: Set the version in the justfile, README and website
+        run: just bump-version "$VERSION"
+      - name: Commit, tag and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -q -am "Release v$VERSION"
+          git tag "v$VERSION"
+          git push origin HEAD:main "v$VERSION"
+      # Pushes made with GITHUB_TOKEN don't trigger workflows, but a workflow_dispatch does.
+      - name: Start the release build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run build.yml --ref "v$VERSION"
+          echo "Released v$VERSION. The [Build workflow](${{ github.server_url }}/${{ github.repository }}/actions/workflows/build.yml) now builds the installers and publishes the release." >> "$GITHUB_STEP_SUMMARY"

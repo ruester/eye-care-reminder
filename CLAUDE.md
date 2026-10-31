@@ -179,11 +179,16 @@ so repeated downloads don't overwrite each other.
 
 `release_version` in the justfile is the latest published release. The README
 and `site/index.html` link directly to that release's installers
-(`releases/download/vX.Y.Z/...`) and show its version. Release only with the
-recipe, which bumps `release_version` and these links, commits
-"Release vX.Y.Z", tags and pushes main and the tag (CI fails a tag that doesn't
-match `release_version`):
+(`releases/download/vX.Y.Z/...`) and show its version.
+
+Release only with the **Release** workflow (`.github/workflows/release.yml`,
+manual `workflow_dispatch` with a `version` input). It runs
+`just bump-version X.Y.Z` (updates `release_version` and the links), commits
+"Release vX.Y.Z" to main, pushes the tag and starts `build.yml` for the tag via
+`gh workflow run` (pushes with `GITHUB_TOKEN` don't trigger workflows), which
+publishes the GitHub release. `build.yml` fails for a tag that doesn't match
+`release_version`. Pull afterwards: main has the release commit.
 
 ```bash
-just release 1.0.0
+gh workflow run release.yml -f version=1.0.0
 ```
