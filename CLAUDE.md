@@ -32,7 +32,8 @@ src/
 site/              landing page (static HTML/CSS/JS), deployed to GitHub Pages
 build/             build output; created by the just recipes, not tracked
 justfile           all build recipes
-.github/workflows/build.yml   CI + GitHub release publishing
+.github/workflows/build.yml   CI + GitHub release publishing + download link update
+.github/workflows/pages.yml   website deployment (GitHub Pages)
 ```
 
 New Linux desktop environments get their own folder under `src/linux/<name>/`
@@ -160,7 +161,7 @@ suffixes such as `-rc1`.
   icon) and PNG icons. Its colours match the Windows app (`#00897B` accent,
   `#26A69A`, `#D6ECE9` countdown track, `#142128`); it supports dark mode.
 - The download buttons link directly to the `.msi` of `release_version`
-  (updated by `just release`, see Releases). Keep the page truthful: Linux is shown as "in development"
+  (updated by CI after each release, see Releases). Keep the page truthful: Linux is shown as "in development"
   until the Linux app exists.
 - `.github/workflows/pages.yml` deploys `site/` on pushes to `main` that touch
   it. It is skipped while the repository is private (Pages needs a paid plan
@@ -179,16 +180,16 @@ so repeated downloads don't overwrite each other.
 
 `release_version` in the justfile is the latest published release. The README
 and `site/index.html` link directly to that release's installers
-(`releases/download/vX.Y.Z/...`) and show its version.
+(`releases/download/vX.Y.Z/...`) and show its version. Don't edit these by
+hand: after publishing a tag's release, the `update-download-links` job in
+`build.yml` runs `just bump-version X.Y.Z` on main (never downgrades, no-op if
+already current), commits "Update download links to vX.Y.Z" and, if the repo
+is public, starts the website deployment (pushes with `GITHUB_TOKEN` don't
+trigger workflows, a `workflow_dispatch` does). The links therefore only
+switch once the new installers exist. Pull afterwards: main has that commit.
 
-Release only with the **Release** workflow (`.github/workflows/release.yml`,
-manual `workflow_dispatch` with a `version` input). It runs
-`just bump-version X.Y.Z` (updates `release_version` and the links), commits
-"Release vX.Y.Z" to main, pushes the tag and starts `build.yml` for the tag via
-`gh workflow run` (pushes with `GITHUB_TOKEN` don't trigger workflows), which
-publishes the GitHub release. `build.yml` fails for a tag that doesn't match
-`release_version`. Pull afterwards: main has the release commit.
+Release by tagging main:
 
 ```bash
-gh workflow run release.yml -f version=1.0.0
+git pull && git tag v1.0.0 && git push origin v1.0.0
 ```

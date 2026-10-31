@@ -3,8 +3,9 @@
 
 set windows-shell := ["pwsh", "-NoLogo", "-NoProfile", "-Command"]
 
-# Latest published release, set by the Release workflow (just bump-version) together
-# with the download links in README.md and site/index.html. CI checks that tags match.
+# Latest published release. After a tag vX.Y.Z is released, CI runs
+# `just bump-version X.Y.Z` and commits it together with the download links in
+# README.md and site/index.html.
 release_version := "0.1.5"
 
 # Version stamped into builds, e.g. VERSION=1.2.3 just build-linux. MSI requires x.y.z.
@@ -47,8 +48,8 @@ test-windows:
     dotnet test src/windows/tests/EyeCareReminder.Tests.csproj -c Debug --collect "Code Coverage" --settings src/windows/tests/coverage.runsettings --results-directory build/test-results
     ./src/windows/tests/Get-Coverage.ps1 -ResultsDir build/test-results
 
-# Set the release version: release_version and the download links in README.md and
-# site/index.html (used by the Release workflow, which also commits, tags and builds)
+# Set release_version and the download links in README.md and site/index.html
+# (run by CI after a release; never downgrades)
 [unix]
 bump-version new_version:
     #!/usr/bin/env bash
@@ -56,7 +57,10 @@ bump-version new_version:
     new="{{new_version}}"
     [[ "$new" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Version must be major.minor.patch, e.g. 1.0.0" >&2; exit 1; }
     old="{{release_version}}"
-    [[ "$old" != "$new" ]] || { echo "Version $new is already the current release" >&2; exit 1; }
+    if [[ "$old" == "$new" ]]; then echo "Release version is already $new"; exit 0; fi
+    if [[ "$(printf '%s\n' "$old" "$new" | sort -V | tail -n 1)" != "$new" ]]; then
+        echo "Keeping release version $old: $new is older"; exit 0
+    fi
     old_re="${old//./\\.}"
     sed -i.bak -E "s/^release_version := \"$old_re\"/release_version := \"$new\"/" justfile
     for file in README.md site/index.html; do
