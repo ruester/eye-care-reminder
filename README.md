@@ -63,3 +63,7 @@ Build the installer (`build/eye-care-reminder-<version>-linux.bin`):
 ```bash
 just build-linux
 ```
+
+## License
+
+Eye Care Reminder is released under the [MIT License](LICENSE).

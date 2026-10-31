@@ -11,6 +11,11 @@ that periodically (user-defined interval) reminds the user to rest their eyes.
 
 Work directly on `main`: commit and push there. Do not create feature branches.
 
+## License
+
+MIT (`LICENSE`, copyright holder Matthias Rüster). The README and the website
+footer link to it.
+
 ## Repository layout
 
 ```
