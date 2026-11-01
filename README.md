@@ -3,13 +3,47 @@
 [![Build](https://github.com/ruester/eye-care-reminder/actions/workflows/build.yml/badge.svg)](https://github.com/ruester/eye-care-reminder/actions/workflows/build.yml)
 [![Releases](https://img.shields.io/badge/Releases-Download-blue)](https://github.com/ruester/eye-care-reminder/releases/latest)
 [![Windows unit test coverage](.github/badges/windows-coverage.svg)](https://github.com/ruester/eye-care-reminder/actions/workflows/build.yml)
-[![Linux unit test coverage](https://img.shields.io/badge/Linux%20unit%20test%20coverage-n%2Fa-lightgrey)](#linux)
+[![Linux unit test coverage](.github/badges/linux-coverage.svg)](https://github.com/ruester/eye-care-reminder/actions/workflows/build.yml)
 
 Eye Care Reminder is a lightweight desktop application for Windows and Linux that helps reduce eye strain during long periods of screen work. At a user-defined interval, it displays a desktop notification reminding you to look away from the screen and give your eyes a rest.
 
-The Windows app and installer are available in English, German, French, Italian, Spanish, Portuguese, Dutch (Netherlands and Belgium), French (Belgium), Norwegian, Swedish, Finnish, Czech, Polish and Croatian. They start in the Windows display language; the installer and the settings dialog have a language switcher.
+The app is available in English, German, French, Italian, Spanish, Portuguese, Dutch (Netherlands and Belgium), French (Belgium), Norwegian, Swedish, Finnish, Czech, Polish and Croatian. It starts in the language of your system (Windows display language, or the locale on Linux); the settings dialog and the Windows installer have a language switcher.
 
 **Downloads:** [Windows installer (.msi)](https://github.com/ruester/eye-care-reminder/releases/download/v1.1.0/eye-care-reminder-1.1.0-windows-x64.msi) · [Linux installer (.bin)](https://github.com/ruester/eye-care-reminder/releases/download/v1.1.0/eye-care-reminder-1.1.0-linux.bin) · [all releases](https://github.com/ruester/eye-care-reminder/releases)
+
+## Installation
+
+### Windows
+
+Download the `.msi` and double-click it. The installer isn't code-signed, so Microsoft Defender SmartScreen may warn about it: click *More info* and then *Run anyway*. To uninstall, go to *Settings → Apps → Installed apps*.
+
+### Linux
+
+The Linux app is made for **Xfce**. It also runs on other desktops (GNOME, KDE Plasma, Cinnamon, MATE, ...); whether its tray icon appears there depends on the desktop's tray icon support (AppIndicator), but the reminders work everywhere and the settings are always in the application menu.
+
+Download the `.bin`, make it executable and run it in a terminal (no `sudo` needed):
+
+```bash
+chmod +x eye-care-reminder-1.1.0-linux.bin
+```
+
+```bash
+./eye-care-reminder-1.1.0-linux.bin
+```
+
+(Without `chmod`, `sh eye-care-reminder-1.1.0-linux.bin` works too.) The installer
+
+- installs the app for your user to `~/.local/share/eye-care-reminder`, with an application menu entry and an autostart entry, and starts it,
+- needs Python 3 with GTK 3 (PyGObject). Most desktop distributions have it preinstalled; otherwise the installer shows the command (e.g. `sudo apt-get install python3-gi python3-gi-cairo gir1.2-gtk-3.0`) and offers to run it,
+- upgrades an installed version in place (settings in `~/.config/eye-care-reminder` are kept).
+
+Run it with `sudo` to install for all users instead (`/opt/eye-care-reminder`, autostart in `/etc/xdg/autostart`). `--help` lists the options (`--no-launch`, `--uninstall`).
+
+To uninstall:
+
+```bash
+sh ~/.local/share/eye-care-reminder/uninstall.sh
+```
 
 ## Development
 
@@ -48,21 +82,36 @@ just test-windows
 
 ### Linux
 
+The Linux app (`src/linux/app`) is written in Python 3 with GTK 3 (PyGObject); the installer is a self-extracting POSIX shell script.
+
 Requirements:
 
 - [just](https://github.com/casey/just)
 - `bash`, `tar`, `gzip` and `awk` (preinstalled on most distributions)
+- to run and test the app: Python 3.8 or later with PyGObject (GTK 3) and pycairo, optionally coverage.py
 
-Install `just` on Debian/Ubuntu (24.04 or later) with:
+Install them on Debian/Ubuntu (24.04 or later) with:
 
 ```bash
-sudo apt install just
+sudo apt install just python3-gi python3-gi-cairo gir1.2-gtk-3.0 python3-coverage
 ```
 
 Build the installer (`build/eye-care-reminder-<version>-linux.bin`):
 
 ```bash
 just build-linux
+```
+
+Run the unit tests with line coverage (report in `build/linux-test-results`):
+
+```bash
+just test-linux
+```
+
+Run the app from the source tree:
+
+```bash
+python3 src/linux/app/eye-care-reminder.py
 ```
 
 ## License

@@ -490,6 +490,7 @@ h3 {
 }
 
 .download-card {
+  min-width: 0; /* lets the install commands scroll instead of widening the grid */
   padding: 28px;
   border-radius: 14px;
   border: 1px solid var(--border);
@@ -501,20 +502,27 @@ h3 {
   margin: 0 0 20px;
 }
 
-.download-card.muted h3 {
+.install-label {
+  margin: 20px 0 8px;
   color: var(--text-muted);
+  font-size: 0.9rem;
 }
 
-.badge {
-  display: inline-block;
-  margin-left: 8px;
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: var(--track);
-  color: var(--accent-dark);
-  font-size: 0.75rem;
-  font-weight: 600;
-  vertical-align: middle;
+.install-steps {
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: var(--bg-tinted);
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
 }
 
 .all-releases {

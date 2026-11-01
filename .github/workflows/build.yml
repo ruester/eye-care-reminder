@@ -17,9 +17,16 @@ jobs:
   linux:
     name: Linux installer (.bin)
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # commit the coverage badge to main
     steps:
       - uses: actions/checkout@v4
       - uses: extractions/setup-just@v2
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends python3-gi python3-gi-cairo gir1.2-gtk-3.0 \
+            python3-coverage xvfb xauth xdotool dbus dbus-x11
       - name: Determine version
         shell: bash
         run: |
@@ -28,7 +35,34 @@ jobs:
           else
             echo "VERSION=0.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
           fi
+      - name: Check shell scripts
+        run: |
+          shellcheck -s sh src/linux/installer/*.sh src/linux/tests/*.sh
+          shellcheck .github/scripts/*.sh
+      - name: Unit tests with coverage
+        env:
+          PYTHON: /usr/bin/python3
+        run: just test-linux
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-test-results
+          path: build/linux-test-results/coverage.xml
+          if-no-files-found: ignore
+      - name: Publish coverage badge
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: .github/scripts/publish-coverage-badge.sh Linux "$(cat build/linux-test-results/coverage-percent.txt)"
       - run: just build-linux
+      - name: Test installer (install, upgrade and uninstall while the app is running)
+        timeout-minutes: 10
+        run: |
+          new="build/eye-care-reminder-$VERSION-linux.bin"
+          VERSION=0.0.0 just build-linux
+          xvfb-run -a dbus-run-session sh src/linux/tests/test-installer.sh \
+            build/eye-care-reminder-0.0.0-linux.bin "$new" "$VERSION"
+          rm build/eye-care-reminder-0.0.0-linux.bin
       - uses: actions/upload-artifact@v4
         with:
           name: linux-installer
@@ -66,35 +100,10 @@ jobs:
           if-no-files-found: ignore
       - name: Publish coverage badge
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        shell: pwsh
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Commits .github/badges/windows-coverage.svg to main, only when it changes.
-          # Pushes made with GITHUB_TOKEN don't trigger workflows.
-          $percent = [int](Get-Content build/test-results/coverage-percent.txt)
-          $color = if ($percent -ge 80) { "brightgreen" } elseif ($percent -ge 60) { "green" } `
-                   elseif ($percent -ge 40) { "yellow" } elseif ($percent -ge 20) { "orange" } else { "red" }
-          $svg = Join-Path $env:RUNNER_TEMP windows-coverage.svg
-          Invoke-WebRequest "https://img.shields.io/badge/Windows%20unit%20test%20coverage-$percent%25-$color" -OutFile $svg
-          $remote = "https://x-access-token:$env:GH_TOKEN@github.com/$env:GITHUB_REPOSITORY.git"
-          foreach ($attempt in 1..3) {
-            # Fresh clone of the latest main, so the build checkout stays untouched.
-            $dir = Join-Path $env:RUNNER_TEMP "badge-$attempt"
-            git clone -q --depth 1 --branch main $remote $dir
-            if ($LASTEXITCODE -ne 0) { throw "git clone failed" }
-            $target = Join-Path $dir .github/badges/windows-coverage.svg
-            New-Item -ItemType Directory -Force (Split-Path $target) | Out-Null
-            Copy-Item $svg $target -Force
-            git -C $dir add .github/badges/windows-coverage.svg
-            git -C $dir diff --cached --quiet
-            if ($LASTEXITCODE -eq 0) { Write-Host "Coverage badge unchanged ($percent%)"; exit 0 }
-            git -C $dir -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "Update Windows coverage badge to $percent%"
-            git -C $dir push -q origin HEAD:main
-            if ($LASTEXITCODE -eq 0) { Write-Host "Coverage badge updated to $percent%"; exit 0 }
-            Write-Host "Push rejected (main moved), retrying"
-          }
-          throw "Could not push the coverage badge to main"
+        run: .github/scripts/publish-coverage-badge.sh Windows "$(cat build/test-results/coverage-percent.txt | tr -d '[:space:]')"
       - run: just build-windows
       - name: Test installer (upgrade and uninstall while the app is running)
         shell: pwsh

@@ -1,0 +1,23 @@
+[Desktop Entry]
+Type=Application
+Name=Eye Care Reminder
+Comment=Reminds you to rest your eyes
+Comment[cs]=Připomíná vám odpočinek očí
+Comment[de]=Erinnert Sie daran, Ihre Augen auszuruhen
+Comment[es]=Te recuerda descansar la vista
+Comment[fi]=Muistuttaa lepuuttamaan silmiä
+Comment[fr]=Vous rappelle de reposer vos yeux
+Comment[hr]=Podsjeća vas da odmorite oči
+Comment[it]=Ti ricorda di far riposare gli occhi
+Comment[nb]=Minner deg på å hvile øynene
+Comment[nl]=Herinnert je eraan je ogen rust te geven
+Comment[pl]=Przypomina o odpoczynku dla oczu
+Comment[pt]=Lembra-o de descansar os olhos
+Comment[sv]=Påminner dig om att vila ögonen
+Exec=@EXEC@
+Icon=eye-care-reminder
+Terminal=false
+Categories=Utility;
+Keywords=eyes;break;reminder;screen;health;
+StartupNotify=false
+X-GNOME-Autostart-enabled=true

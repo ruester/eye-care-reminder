@@ -21,10 +21,10 @@ footer link to it.
 ```
 src/
   linux/
-    installer/     header.sh (self-extracting stub) + install.sh (DE detection/installation)
-    freedesktop/   generic variant: freedesktop.org Desktop Notifications (D-Bus)
-    xfce/          Xfce variant
-    unity/         Unity (Ubuntu) variant
+    app/           Python 3 + GTK 3 tray app (eye-care-reminder.py + eye_care_reminder/ package, icons/)
+    installer/     header.sh (self-extracting stub), install.sh (install/upgrade/uninstall),
+                   eye-care-reminder.desktop.in (menu + autostart entry)
+    tests/         unittest tests (test_*.py) and test-installer.sh (end-to-end, CI)
   windows/
     app/           C# WinForms tray app (.NET Framework 4.8, EyeCareReminder.csproj)
     installer/     Package.wxs (WiX Toolset v5 source for the MSI), l10n/*.wxl (installer texts),
@@ -35,12 +35,9 @@ build/             build output; created by the just recipes, not tracked
 justfile           all build recipes
 .github/workflows/build.yml   CI + GitHub release publishing + download link update
 .github/workflows/pages.yml   website deployment (GitHub Pages)
-.github/badges/               Windows coverage badge, committed by CI
+.github/badges/               coverage badges, committed by CI
+.github/scripts/              publish-coverage-badge.sh (used by build.yml)
 ```
-
-New Linux desktop environments get their own folder under `src/linux/<name>/`
-and must be added to `SUPPORTED`, the detection logic and the prompt in
-`src/linux/installer/install.sh`, and to the `cp` line in `build-linux`.
 
 ## Building
 
@@ -54,26 +51,59 @@ All builds go through `just` (`just --list` shows the recipes):
   `wix extension add --global WixToolset.UI.wixext/5.0.2`)
 - `just test-windows` -> runs the Windows unit tests with line coverage
   (Cobertura report in `build/test-results`, Windows host with the .NET SDK)
+- `just test-linux` -> runs the Linux unit tests, with line coverage if coverage.py
+  is installed (`build/linux-test-results`; `PYTHON=` picks the interpreter)
 - `just clean` -> deletes `build/`
 
 The version comes from the `VERSION` environment variable (default `0.0.0`).
 It must be numeric `major.minor.patch` because MSI versions do not allow
 suffixes such as `-rc1`.
 
-## Linux notes
+## Linux app
 
-- The standard Linux notification mechanism is the freedesktop.org
-  **Desktop Notifications Specification** (D-Bus service
-  `org.freedesktop.Notifications`), usually used through `libnotify` /
-  `notify-send`. Both Xfce (`xfce4-notifyd`) and Unity (`notify-osd`)
-  implement it, so the `freedesktop` variant is the fallback for every other DE.
-- The `.bin` is a POSIX `sh` header with a gzipped tarball appended after the
-  `__PAYLOAD_BELOW__` marker. Keep `header.sh` and `install.sh` POSIX `sh`
-  (no bashisms) so they run on Debian/Ubuntu `dash`.
-- `install.sh` detects Xfce/Unity by installed binaries/session files. If
-  exactly one is found it is used; if both or none are found the user is
-  asked (reading from `/dev/tty`, suggesting `$XDG_CURRENT_DESKTOP`).
-  `--de=` and `--prefix=` allow non-interactive installs.
+- Primary target: **Xfce** (X11). The same app is installed on every desktop; there is
+  no per-desktop variant. Python 3.8+ with PyGObject (GTK 3) and pycairo only, no pip
+  packages (Debian/Ubuntu: `python3-gi python3-gi-cairo gir1.2-gtk-3.0`). Optional:
+  AyatanaAppIndicator3/AppIndicator3 for the tray icon outside Xfce.
+- It mirrors the Windows app (same features, texts, languages, settings ranges):
+  - `eye_care_reminder/` modules without GTK (unit tested): `plural`, `translations`
+    (same texts as `Translations.cs`; a test compares them, so change both), `languages`
+    (list as in `Language.cs`; detection from `LC_ALL`/`LC_MESSAGES`/`LANG`/`LANGUAGE`,
+    Belgian via the messages or `LC_TIME` locale), `flags` + `painting` (cairo: flags,
+    app icon; `python3 -m eye_care_reminder.painting DIR` re-renders `icons/*.png`),
+    `settings` (`$XDG_CONFIG_HOME/eye-care-reminder/settings.ini`, keys
+    `interval_minutes`, `auto_hide`, `auto_hide_seconds`, `language`), `timeformat`,
+    `countdown`, `main` (`--version`).
+  - GTK modules: `app` (Gtk.Application `io.github.ruester.EyeCareReminder`: single
+    instance per session, a second start opens the settings unless `--autostart`; a
+    wall-clock check every 5 s shows the reminder, so suspend doesn't delay it),
+    `ui_tray` (Gtk.StatusIcon on Xfce: left click = settings, tooltip = next break;
+    AppIndicator elsewhere if installed), `ui_popup` (own popup on X11 like Windows:
+    override-redirect window bottom right of the work area, countdown bar, no focus,
+    ignores Do Not Disturb; without X11 a freedesktop.org notification), `ui_settings`
+    (dialog with flag language switcher), `session_lock` (unlock / screen saver end
+    restarts the interval: org.freedesktop/xfce/gnome/cinnamon/mate ScreenSaver
+    `ActiveChanged`, logind `Unlock` and `LockedHint`).
+  - Under Wayland the app runs through XWayland (`GDK_BACKEND=x11`) if available.
+- Installer (`.bin`): POSIX `sh` header with a gzipped tarball (`installer/`, `app/`,
+  `VERSION`) after the `__PAYLOAD_BELOW__` marker. Keep `header.sh` and `install.sh`
+  POSIX `sh` (no bashisms; Debian's `dash`), checked with shellcheck in CI. `install.sh`:
+  - as a user: `~/.local/share/eye-care-reminder`, launcher `~/.local/bin/eye-care-reminder`
+    (runs the app with the python3 that has GTK, preferring `/usr/bin/python3`), menu entry
+    in `~/.local/share/applications`, icons in `~/.local/share/icons/hicolor`, autostart
+    in `~/.config/autostart` (`--autostart`); as root: `/opt`, `/usr/local/...`,
+    `/etc/xdg/autostart`;
+  - missing Python/GTK: prints the package manager command (apt/dnf/zypper/pacman) and
+    offers to run it (asks on `/dev/tty`);
+  - upgrade: stops running instances, replaces the files, restarts the app silently if it
+    was running; a fresh install starts it with the settings dialog (not as root,
+    not with `--no-launch`);
+  - uninstall: `<app dir>/uninstall.sh` (a copy of install.sh) or `--uninstall`; keeps
+    the settings file.
+- CI runs `src/linux/tests/test-installer.sh` under `xvfb-run dbus-run-session`: installs a
+  0.0.0 build, checks files, running app and settings window (xdotool), single instance,
+  upgrades while running (settings kept, restarted), uninstalls while running (no
+  leftovers), and installs/uninstalls as root.
 
 ## Windows app
 
@@ -102,7 +132,7 @@ suffixes such as `-rc1`.
   (also written by the installer). "Test notification" uses the auto-hide
   values and the language currently selected in the dialog, even if unsaved.
 
-## Languages (Windows app and installer)
+## Languages (Windows app and installer; the Linux app has the same languages and texts)
 
 - Supported: English (`en`, no US/GB distinction, UK flag), German `de`,
   French `fr`, Italian `it`, Spanish `es`, Portuguese `pt`, Dutch `nl`,
@@ -156,11 +186,12 @@ suffixes such as `-rc1`.
 - Coverage uses Microsoft Code Coverage (`coverage.runsettings`, limited to
   `EyeCareReminder.exe`), so it is measured over the whole app including UI code.
   Tests run in Debug because Release builds have no PDBs.
-- Coverage badge: on pushes to `main` the CI Windows job renders
-  `.github/badges/windows-coverage.svg` (shields.io) and commits it to `main`
-  ("Update Windows coverage badge to N%") when it changed; the README shows it via
-  a relative path. Don't edit it by hand. The Linux
-  coverage badge in the README is static (`n/a`) until there is Linux code.
+- Coverage badges: on pushes to `main` the CI Windows and Linux jobs render
+  `.github/badges/{windows,linux}-coverage.svg` (shields.io, via
+  `.github/scripts/publish-coverage-badge.sh`) and commit them to `main`
+  ("Update Windows coverage badge to N%") when they changed; the README shows them via
+  relative paths. Don't edit them by hand. Linux coverage is measured over the whole
+  `src/linux/app` (GTK modules included, they are only tested end-to-end).
 
 ## Windows installer notes
 
@@ -205,9 +236,9 @@ suffixes such as `-rc1`.
   in `i18n.js` (elements with `data-i18n` keys; `{version}` = `<html data-version>`).
   Selection: `?lang=xx`, else the choice remembered in localStorage, else the
   browser language. Translate new texts in all four languages there.
-- The download buttons link directly to the `.msi` of `release_version`
-  (updated by CI after each release, see Releases). Keep the page truthful: Linux is shown as "in development"
-  until the Linux app exists.
+- The download buttons link directly to the `.msi` / `.bin` of `release_version`
+  (updated by CI after each release, see Releases); the Linux card shows the
+  `chmod +x` / run commands with the versioned file name (also updated by `bump-version`).
 - `.github/workflows/pages.yml` deploys `site/` on pushes to `main` that touch
   it. It is skipped while the repository is private (Pages needs a paid plan
   for private repos). After making the repo public, set Settings -> Pages ->
@@ -217,7 +248,7 @@ suffixes such as `-rc1`.
 
 ## Releases
 
-`.github/workflows/build.yml` runs the Windows unit tests and builds both installers on every push to any branch and on PRs. Pushing a
+`.github/workflows/build.yml` runs the Windows and Linux unit tests, builds both installers and tests them on every push to any branch and on PRs. Pushing a
 tag `vX.Y.Z` additionally creates a GitHub release with both installers
 attached. Asset names contain the version
 (`eye-care-reminder-<version>-linux.bin`, `eye-care-reminder-<version>-windows-x64.msi`)

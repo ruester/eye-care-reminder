@@ -25,13 +25,37 @@ build-linux:
     set -euo pipefail
     stage=build/linux/stage
     rm -rf build/linux
-    mkdir -p "$stage"
-    cp -R src/linux/installer src/linux/freedesktop src/linux/xfce src/linux/unity "$stage/"
+    mkdir -p "$stage/app"
+    cp -R src/linux/installer "$stage/installer"
+    cp -R src/linux/app/. "$stage/app/"
+    find "$stage" -name __pycache__ -prune -exec rm -rf {} +
     echo "{{version}}" > "$stage/VERSION"
     tar -C "$stage" -czf build/linux/payload.tar.gz .
     cat src/linux/installer/header.sh build/linux/payload.tar.gz > "{{linux_bin}}"
     chmod +x "{{linux_bin}}"
     echo "Built {{linux_bin}} (version {{version}})"
+
+# Run the Linux unit tests, with line coverage if coverage.py is installed (report in build/linux-test-results)
+[unix]
+test-linux:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    results=build/linux-test-results
+    rm -rf "$results"
+    mkdir -p "$results"
+    export PYTHONPATH=src/linux/app:src/linux/tests PYTHONDONTWRITEBYTECODE=1
+    python="${PYTHON:-python3}"
+    if ! "$python" -m coverage --version >/dev/null 2>&1; then
+        echo "coverage.py is not installed: running the tests without coverage"
+        "$python" -m unittest discover -s src/linux/tests
+        exit 0
+    fi
+    data="--data-file=$results/.coverage"
+    "$python" -m coverage run "$data" --source=src/linux/app -m unittest discover -s src/linux/tests
+    "$python" -m coverage report "$data"
+    "$python" -m coverage xml "$data" -q -o "$results/coverage.xml"
+    "$python" -m coverage report "$data" --format=total > "$results/coverage-percent.txt"
+    echo "Line coverage: $(cat "$results/coverage-percent.txt")%"
 
 # Build the Windows tray app and the multilingual MSI installer (requires the .NET SDK and WiX Toolset, see CLAUDE.md)
 [windows]
