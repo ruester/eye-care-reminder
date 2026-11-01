@@ -2,7 +2,7 @@
 
 [![Build](https://github.com/ruester/eye-care-reminder/actions/workflows/build.yml/badge.svg)](https://github.com/ruester/eye-care-reminder/actions/workflows/build.yml)
 [![Releases](https://img.shields.io/badge/Releases-Download-blue)](https://github.com/ruester/eye-care-reminder/releases/latest)
-[![Windows unit test coverage](https://github.com/ruester/eye-care-reminder/raw/badges/windows-coverage.svg)](https://github.com/ruester/eye-care-reminder/actions/workflows/build.yml)
+[![Windows unit test coverage](.github/badges/windows-coverage.svg)](https://github.com/ruester/eye-care-reminder/actions/workflows/build.yml)
 [![Linux unit test coverage](https://img.shields.io/badge/Linux%20unit%20test%20coverage-n%2Fa-lightgrey)](#linux)
 
 Eye Care Reminder is a lightweight desktop application for Windows and Linux that helps reduce eye strain during long periods of screen work. At a user-defined interval, it displays a desktop notification reminding you to look away from the screen and give your eyes a rest.

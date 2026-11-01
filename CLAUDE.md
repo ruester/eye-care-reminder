@@ -35,6 +35,7 @@ build/             build output; created by the just recipes, not tracked
 justfile           all build recipes
 .github/workflows/build.yml   CI + GitHub release publishing + download link update
 .github/workflows/pages.yml   website deployment (GitHub Pages)
+.github/badges/               Windows coverage badge, committed by CI
 ```
 
 New Linux desktop environments get their own folder under `src/linux/<name>/`
@@ -156,8 +157,9 @@ suffixes such as `-rc1`.
   `EyeCareReminder.exe`), so it is measured over the whole app including UI code.
   Tests run in Debug because Release builds have no PDBs.
 - Coverage badge: on pushes to `main` the CI Windows job renders
-  `windows-coverage.svg` and force-pushes it as the only commit of the
-  CI-managed `badges` branch (do not delete it or work on it). The Linux
+  `.github/badges/windows-coverage.svg` (shields.io) and commits it to `main`
+  ("Update Windows coverage badge to N%") when it changed; the README shows it via
+  a relative path. Don't edit it by hand. The Linux
   coverage badge in the README is static (`n/a`) until there is Linux code.
 
 ## Windows installer notes
