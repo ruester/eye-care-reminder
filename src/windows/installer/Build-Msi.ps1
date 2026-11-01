@@ -17,6 +17,11 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# Windows Installer (COM) resolves relative paths against the process directory: use absolute ones.
+function Get-FullPath([string]$Path) { $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Path) }
+$PayloadDir = Get-FullPath $PayloadDir
+$Output = Get-FullPath $Output
+
 # Culture -> LCID. en-US is the base (also used for every other display language).
 $cultures = [ordered]@{
     'en-US' = 1033; 'de-DE' = 1031; 'fr-FR' = 1036; 'it-IT' = 1040; 'es-ES' = 3082
@@ -27,7 +32,7 @@ $cultures = [ordered]@{
 $aliases = @{ 2058 = 'es-ES' <# es-MX #>; 3084 = 'fr-FR' <# fr-CA #> }
 
 $installerDir = $PSScriptRoot
-$work = Join-Path (Split-Path -Parent $Output) 'windows/msi'
+$work = [string](Join-Path (Split-Path -Parent $Output) 'windows\msi')
 New-Item -ItemType Directory -Force $work | Out-Null
 
 function Invoke-Native([string]$Description, [scriptblock]$Command) {
@@ -66,7 +71,17 @@ foreach ($lcid in $aliases.Keys) {
 Copy-Item $base $Output -Force
 
 function Invoke-Com($Object, [string]$Name, [string]$Kind, [object[]]$Arguments = @()) {
-    $Object.GetType().InvokeMember($Name, [System.Reflection.BindingFlags]$Kind, $null, $Object, $Arguments)
+    # Pass plain .NET values: PowerShell-wrapped ones (PSObject) cause DISP_E_TYPEMISMATCH.
+    $plain = [object[]]::new($Arguments.Count)
+    for ($i = 0; $i -lt $Arguments.Count; $i++) {
+        $value = $Arguments[$i]
+        $plain[$i] = if ($value -is [System.Management.Automation.PSObject]) { $value.PSObject.BaseObject } else { $value }
+    }
+    try {
+        $Object.GetType().InvokeMember($Name, [System.Reflection.BindingFlags]$Kind, $null, $Object, $plain)
+    } catch {
+        throw "Windows Installer $Name($($plain -join ', ')) failed: $($_.Exception.InnerException.Message ?? $_.Exception.Message)"
+    }
 }
 
 $installer = New-Object -ComObject WindowsInstaller.Installer
