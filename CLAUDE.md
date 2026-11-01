@@ -61,10 +61,13 @@ suffixes such as `-rc1`.
 
 ## Linux app
 
-- Primary target: **Xfce** (X11). The same app is installed on every desktop; there is
-  no per-desktop variant. Python 3.8+ with PyGObject (GTK 3) and pycairo only, no pip
-  packages (Debian/Ubuntu: `python3-gi python3-gi-cairo gir1.2-gtk-3.0`). Optional:
-  AyatanaAppIndicator3/AppIndicator3 for the tray icon outside Xfce.
+- Supported desktops: **Xfce**, **Ubuntu Unity**, **GNOME**, **KDE Plasma**, **i3**. The
+  same app is installed on every desktop; there is no per-desktop variant (`desktop.py`
+  detects the desktop at runtime). Python 3.8+ with PyGObject (GTK 3) and pycairo only, no
+  pip packages (Debian/Ubuntu: `python3-gi python3-gi-cairo gir1.2-gtk-3.0`), plus
+  AyatanaAppIndicator3/AppIndicator3 on Unity/GNOME/KDE (`gir1.2-ayatanaappindicator3-0.1`)
+  and on GNOME the shell extension "AppIndicator and KStatusNotifierItem Support"
+  (`gnome-shell-extension-appindicator`, built into Ubuntu).
 - It mirrors the Windows app (same features, texts, languages, settings ranges):
   - `eye_care_reminder/` modules without GTK (unit tested): `plural`, `translations`
     (same texts as `Translations.cs`; a test compares them, so change both), `languages`
@@ -73,17 +76,27 @@ suffixes such as `-rc1`.
     app icon; `python3 -m eye_care_reminder.painting DIR` re-renders `icons/*.png`),
     `settings` (`$XDG_CONFIG_HOME/eye-care-reminder/settings.ini`, keys
     `interval_minutes`, `auto_hide`, `auto_hide_seconds`, `language`), `timeformat`,
-    `countdown`, `main` (`--version`).
+    `countdown`, `main` (`--version`), `desktop` (detection from `XDG_CURRENT_DESKTOP`,
+    i3 also via `I3SOCK` without `SWAYSOCK`; Budgie/Flashback/Pantheon aren't GNOME Shell;
+    tray kind; i3 work area from `i3-msg -t get_workspaces`, since i3 has no
+    `_NET_WORKAREA`), `fallback` (fallback commands and notification daemons to start).
   - GTK modules: `app` (Gtk.Application `io.github.ruester.EyeCareReminder`: single
     instance per session, a second start opens the settings unless `--autostart`; a
     wall-clock check every 5 s shows the reminder, so suspend doesn't delay it),
-    `ui_tray` (Gtk.StatusIcon on Xfce: left click = settings, tooltip = next break;
-    AppIndicator elsewhere if installed), `ui_popup` (own popup on X11 like Windows:
-    override-redirect window bottom right of the work area, countdown bar, no focus,
-    ignores Do Not Disturb; without X11 a freedesktop.org notification), `ui_settings`
-    (dialog with flag language switcher), `session_lock` (unlock / screen saver end
-    restarts the interval: org.freedesktop/xfce/gnome/cinnamon/mate ScreenSaver
-    `ActiveChanged`, logind `Unlock` and `LockedHint`).
+    `ui_tray` (Gtk.StatusIcon on Xfce and i3: left click = settings, tooltip = next break;
+    AppIndicator elsewhere if installed, icon by name with the app's `icons/` as theme
+    path (SVG); next break as a menu entry; warns on stderr on GNOME without a
+    StatusNotifierWatcher), `ui_popup` (own popup on X11 like Windows:
+    override-redirect window bottom right of the work area (on i3 above i3bar), countdown
+    bar, no focus, ignores Do Not Disturb, needs no window manager. If not possible (pure
+    Wayland) or failing, `FallbackReminder` tries in order: notification daemon over
+    D-Bus (if running or activatable), starting an installed mako (Wayland) / dunst,
+    `notify-send`, `kdialog --passivepopup`, an ordinary app window (`managed=True`),
+    `xmessage`; a command counts as shown if it exits 0 or still runs after 3 s; each
+    failure is logged to stderr), `ui_settings` (dialog with flag language switcher),
+    `session_lock` (unlock / screen saver end restarts the interval:
+    org.freedesktop/xfce/gnome/cinnamon/mate ScreenSaver `ActiveChanged`, Unity's
+    `com.canonical.Unity.Session` `Unlocked`, logind `Unlock` and `LockedHint`).
   - Under Wayland the app runs through XWayland (`GDK_BACKEND=x11`) if available.
 - Installer (`.bin`): POSIX `sh` header with a gzipped tarball (`installer/`, `app/`,
   `VERSION`) after the `__PAYLOAD_BELOW__` marker. Keep `header.sh` and `install.sh`
@@ -94,9 +107,11 @@ suffixes such as `-rc1`.
     in `~/.config/autostart` (`--autostart`); as root: `/opt`, `/usr/local/...`,
     `/etc/xdg/autostart`;
   - compatibility check first (`check_system`, also `--check` alone): Linux, desktop
-    (Xfce ok; other desktops: note + confirmation on a terminal), display server, Python
-    >= 3.8 and the modules gi/gtk/cairo (one probe script; AppIndicator is reported as
-    optional outside Xfce). Incompatible (not Linux, old Python): abort. Missing
+    (`detect_desktop`: Xfce, Unity, GNOME, KDE Plasma, i3 ok; other desktops: note +
+    confirmation on a terminal), display server, Python >= 3.8 and the modules
+    gi/gtk/cairo (one probe script; AppIndicator required on Unity/GNOME/KDE, optional
+    elsewhere; GNOME: the AppIndicator extension is a dependency, enabled after the
+    install with `gnome-extensions enable`; i3: reports whether the i3 config runs `dex`). Incompatible (not Linux, old Python): abort. Missing
     dependencies: lists them, prints the package manager command (apt/dnf/zypper/pacman,
     only the missing packages) and offers to run it (asks on `/dev/tty`; without a
     terminal it aborts). `EYE_CARE_REMINDER_PYTHON` overrides the interpreter (tests);
@@ -104,13 +119,18 @@ suffixes such as `-rc1`.
   - upgrade: stops running instances, replaces the files, restarts the app silently if it
     was running; a fresh install starts it with the settings dialog (not as root,
     not with `--no-launch`);
+  - i3 without `dex` in the user's i3 config: appends a marker comment and
+    `exec --no-startup-id "<launcher>" --autostart` (once); uninstall removes both lines;
+    root installs / system configs only print the line;
   - uninstall: `<app dir>/uninstall.sh` (a copy of install.sh) or `--uninstall`; keeps
     the settings file.
 - CI runs `src/linux/tests/test-installer.sh` under `xvfb-run dbus-run-session`: checks
-  `--check` and the rejection of fake old / incomplete Pythons, installs a
+  `--check` and the rejection of fake old / incomplete Pythons, the desktop rules (Unity,
+  KDE, GNOME extension, Budgie, i3 via `I3SOCK`), installs a
   0.0.0 build, checks files, running app and settings window (xdotool), single instance,
   upgrades while running (settings kept, restarted), uninstalls while running (no
-  leftovers), and installs/uninstalls as root.
+  leftovers), the i3 config autostart line (added once, removed on uninstall, not with
+  dex), and installs/uninstalls as root.
 
 ## Windows app
 

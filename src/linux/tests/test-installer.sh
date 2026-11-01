@@ -68,6 +68,17 @@ check "Unity is supported" sh -c "XDG_CURRENT_DESKTOP=Unity:Unity7:ubuntu EYE_CA
 check "Unity requires AppIndicator" sh -c "! XDG_CURRENT_DESKTOP=Unity:Unity7:ubuntu EYE_CARE_REMINDER_PYTHON='$fakes/python-without-indicator' sh '$new_bin' --check </dev/null"
 check "missing AppIndicator is reported on Unity" sh -c "XDG_CURRENT_DESKTOP=Unity:Unity7:ubuntu EYE_CARE_REMINDER_PYTHON='$fakes/python-without-indicator' sh '$new_bin' --check </dev/null | grep -q 'missing  AppIndicator'"
 check "AppIndicator is optional on Xfce" sh -c "EYE_CARE_REMINDER_PYTHON='$fakes/python-without-indicator' sh '$new_bin' --check </dev/null"
+with_indicator="EYE_CARE_REMINDER_PYTHON='$fakes/python-with-indicator'"
+without_indicator="EYE_CARE_REMINDER_PYTHON='$fakes/python-without-indicator'"
+check "KDE requires AppIndicator" sh -c "! XDG_CURRENT_DESKTOP=KDE $without_indicator sh '$new_bin' --check </dev/null"
+check "KDE is supported" sh -c "XDG_CURRENT_DESKTOP=KDE $with_indicator sh '$new_bin' --check </dev/null | grep -q 'ok       Desktop: KDE Plasma'"
+check "GNOME requires the AppIndicator extension" sh -c "XDG_CURRENT_DESKTOP=ubuntu:GNOME $with_indicator sh '$new_bin' --check </dev/null | grep -q 'missing  GNOME Shell extension'"
+extension_dir=$HOME/.local/share/gnome-shell/extensions/appindicatorsupport@rgcjonas.gmail.com
+mkdir -p "$extension_dir"
+check "GNOME with the extension is supported" sh -c "XDG_CURRENT_DESKTOP=ubuntu:GNOME $with_indicator sh '$new_bin' --check </dev/null | grep -q 'ok       GNOME Shell extension'"
+rm -rf "$HOME/.local/share/gnome-shell"
+check "Budgie is not GNOME" sh -c "XDG_CURRENT_DESKTOP=Budgie:GNOME $with_indicator sh '$new_bin' --check </dev/null | grep -q 'not officially supported'"
+check "i3 without XDG_CURRENT_DESKTOP" sh -c "env -u XDG_CURRENT_DESKTOP I3SOCK=/tmp/i3-ipc $with_indicator sh '$new_bin' --check </dev/null | grep -q 'ok       Desktop: i3'"
 check "nothing installed" test ! -e "$app_dir"
 rm -rf "$fakes"
 
@@ -108,6 +119,23 @@ check "menu entry removed" test ! -e "$HOME/.local/share/applications/eye-care-r
 check "autostart entry removed" test ! -e "$HOME/.config/autostart/eye-care-reminder.desktop"
 check "icons removed" test -z "$(find "$HOME/.local/share/icons" -name 'eye-care-reminder*')"
 check "settings kept after uninstall" test -f "$settings"
+
+echo "== i3: autostart line in the i3 config (i3 without dex)"
+i3_config=$HOME/.config/i3/config
+mkdir -p "$(dirname "$i3_config")"
+printf 'bar {\n    status_command i3status\n}\n' > "$i3_config"
+cp "$i3_config" "$i3_config.orig"
+XDG_CURRENT_DESKTOP=i3 sh "$new_bin" --no-launch </dev/null
+check "autostart line added" grep -qx "exec --no-startup-id \"$launcher\" --autostart" "$i3_config"
+XDG_CURRENT_DESKTOP=i3 sh "$new_bin" --no-launch </dev/null
+check "added only once" [ "$(grep -c -- "--autostart" "$i3_config")" -eq 1 ]
+sh "$app_dir/uninstall.sh"
+check "i3 config restored" cmp -s "$i3_config" "$i3_config.orig"
+printf 'exec --no-startup-id dex --autostart --environment i3\n' > "$i3_config"
+XDG_CURRENT_DESKTOP=i3 sh "$new_bin" --no-launch </dev/null
+check "no line with dex" [ "$(grep -c "$launcher" "$i3_config")" -eq 0 ]
+sh "$app_dir/uninstall.sh"
+rm -rf "$HOME/.config/i3"
 
 if sudo -n true 2>/dev/null; then
     echo "== Install for all users (root)"

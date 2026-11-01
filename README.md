@@ -19,7 +19,17 @@ Download the `.msi` and double-click it. The installer isn't code-signed, so Mic
 
 ### Linux
 
-The Linux app is made for **Xfce**. It also runs on other desktops (GNOME, KDE Plasma, Cinnamon, MATE, ...); whether its tray icon appears there depends on the desktop's tray icon support (AppIndicator), but the reminders work everywhere and the settings are always in the application menu.
+Supported desktops: **Xfce**, **Ubuntu Unity**, **GNOME**, **KDE Plasma** and the **i3** window manager. It also runs on other desktops (Cinnamon, MATE, ...); whether its tray icon appears there depends on the desktop's tray icon support (AppIndicator), but the reminders work everywhere and the settings are always in the application menu.
+
+| Desktop | Tray icon | Notes |
+| --- | --- | --- |
+| Xfce | notification area | |
+| Ubuntu Unity | panel (AppIndicator) | |
+| GNOME | top bar (AppIndicator) | needs the extension *AppIndicator and KStatusNotifierItem Support* (built into Ubuntu); the installer installs and enables it |
+| KDE Plasma | system tray (AppIndicator) | |
+| i3 | i3bar's tray | the reminder is placed above i3bar; without `dex` in your i3 config the installer adds the autostart line to it (removed on uninstall) |
+
+The reminder is the app's own popup in the bottom-right corner (on Wayland through XWayland). If that isn't possible, it falls back step by step until one works: the desktop's notification daemon, an installed but not running dunst or mako (started for you, e.g. on a bare i3 or sway), `notify-send`, `kdialog`, an ordinary window and finally `xmessage`. So you get the reminder even on a minimal or broken desktop.
 
 Download the `.bin`, make it executable and run it in a terminal (no `sudo` needed):
 
@@ -33,7 +43,7 @@ chmod +x eye-care-reminder-1.2.0-linux.bin
 
 (Without `chmod`, `sh eye-care-reminder-1.2.0-linux.bin` works too.) The installer
 
-- first checks the system: Linux, desktop (Xfce is supported; others work with limitations, it asks before installing there), display server, Python 3.8+ and the GTK 3 dependencies. `--check` runs only this check,
+- first checks the system: Linux, desktop (Xfce, Unity, GNOME, KDE Plasma and i3 are supported; others work with limitations, it asks before installing there), display server, Python 3.8+ and the GTK 3 dependencies (plus AppIndicator on Unity, GNOME and KDE, and the AppIndicator extension on GNOME). `--check` runs only this check,
 - installs the app for your user to `~/.local/share/eye-care-reminder`, with an application menu entry and an autostart entry, and starts it,
 - needs Python 3 with GTK 3 (PyGObject). Most desktop distributions have it preinstalled; otherwise the installer lists what is missing, shows the command for your package manager (apt, dnf, zypper or pacman, e.g. `sudo apt-get install -y python3-gi python3-gi-cairo gir1.2-gtk-3.0`) and offers to run it,
 - upgrades an installed version in place (settings in `~/.config/eye-care-reminder` are kept).

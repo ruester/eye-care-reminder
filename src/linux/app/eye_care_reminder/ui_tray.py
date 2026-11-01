@@ -2,9 +2,10 @@
 
 Xfce (and other X11 panels with a notification area / status tray) get a
 Gtk.StatusIcon: left click opens the settings, right click the menu, the
-tooltip shows the next break. Ubuntu Unity's panel only shows AppIndicators;
-there and on other desktops an AppIndicator (StatusNotifierItem: Unity, KDE
-Plasma, GNOME with the AppIndicator extension, ...) is used if its library is
+tooltip shows the next break; also i3 (i3bar's tray). Ubuntu Unity's panel and
+GNOME Shell (with the "AppIndicator and KStatusNotifierItem Support" extension,
+built into Ubuntu) only show AppIndicators; there and on other desktops (KDE
+Plasma, ...) an AppIndicator (StatusNotifierItem) is used if its library is
 installed. It only has a menu (any click opens it, middle click opens the
 settings), so the next break is a menu entry.
 """
@@ -14,7 +15,7 @@ import sys
 import warnings
 
 import gi
-from gi.repository import Gdk, GLib, Gtk
+from gi.repository import Gdk, Gio, GLib, Gtk
 
 from . import APP_ID, APP_NAME, desktop, painting
 from .translations import mnemonic
@@ -38,6 +39,18 @@ def use_app_indicator(environ=None):
     return desktop.tray_kind(AppIndicator is not None, environ) == desktop.APP_INDICATOR
 
 
+def _status_notifier_host():
+    """Whether something shows AppIndicators (a StatusNotifierWatcher on the session bus)."""
+    try:
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        result = bus.call_sync("org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus",
+                               "NameHasOwner", GLib.Variant("(s)", ("org.kde.StatusNotifierWatcher",)),
+                               None, Gio.DBusCallFlags.NONE, 2000, None)
+        return result.unpack()[0]
+    except GLib.Error:
+        return True  # unknown: don't warn
+
+
 class Tray:
     def __init__(self, icon_path, on_settings, on_break_now, on_exit):
         self.menu = Gtk.Menu()
@@ -52,8 +65,8 @@ class Tray:
         self.status_icon = None
 
         if desktop.missing_tray_support(AppIndicator is not None):
-            print("eye-care-reminder: the tray icon needs AppIndicator on Unity "
-                  "(package gir1.2-ayatanaappindicator3-0.1); "
+            print("eye-care-reminder: the tray icon needs the AppIndicator library on this desktop "
+                  "(package gir1.2-ayatanaappindicator3-0.1 or libayatana-appindicator); "
                   "open the settings from the application menu.", file=sys.stderr)
         if use_app_indicator():
             self.menu.append(self.next_break_item)
@@ -72,6 +85,11 @@ class Tray:
             self.indicator.set_menu(self.menu)
             self.indicator.set_secondary_activate_target(self.settings_item)
             self.indicator.set_status(AppIndicator.IndicatorStatus.ACTIVE)
+            if desktop.is_gnome() and not _status_notifier_host():
+                print("eye-care-reminder: GNOME shows the tray icon only with the extension "
+                      "\"AppIndicator and KStatusNotifierItem Support\" (package "
+                      "gnome-shell-extension-appindicator); open the settings from the "
+                      "application menu.", file=sys.stderr)
         else:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")  # Gtk.StatusIcon is deprecated, but what Xfce supports best

@@ -2,7 +2,7 @@
 # Eye Care Reminder - Linux installer (run by the self-extracting .bin, see header.sh).
 #
 # Installs the app (Python 3 + GTK 3, the same for every desktop environment;
-# supported: Xfce and Ubuntu Unity) with a menu entry and an autostart entry:
+# supported: Xfce, Ubuntu Unity, GNOME, KDE Plasma and i3) with a menu entry and an autostart entry:
 #   - as a normal user: for this user only (~/.local/share/eye-care-reminder),
 #   - as root: for all users (/opt/eye-care-reminder).
 # Running a newer .bin upgrades in place. The installed copy of this script,
@@ -82,6 +82,32 @@ update_icon_cache() {
     fi
 }
 
+# i3 runs XDG autostart entries only if its config starts dex; otherwise the installer
+# adds an exec line (after this marker) to the user's i3 config.
+I3_MARKER="# Eye Care Reminder (added by its installer, removed by its uninstaller)"
+
+# The i3 config file i3 reads (same search order as i3).
+i3_config_file() {
+    for file in "${XDG_CONFIG_HOME:-$HOME/.config}/i3/config" "$HOME/.i3/config" \
+        /etc/xdg/i3/config /etc/i3/config; do
+        if [ -f "$file" ]; then
+            echo "$file"
+            return
+        fi
+    done
+}
+
+i3_runs_xdg_autostart() { grep -Eq '^[[:space:]]*exec(_always)?[[:space:]].*dex' "$1" 2>/dev/null; }
+
+remove_i3_autostart() {
+    for file in "${XDG_CONFIG_HOME:-$HOME/.config}/i3/config" "$HOME/.i3/config"; do
+        if [ -f "$file" ] && grep -qF "$I3_MARKER" "$file"; then
+            awk -v marker="$I3_MARKER" '$0 == marker { skip = 1; next } skip { skip = 0; next } { print }' \
+                "$file" > "$file.tmp" && cat "$file.tmp" > "$file" && rm -f "$file.tmp"
+        fi
+    done
+}
+
 remove_files() {
     rm -rf "$app_dir"
     rm -f "$launcher" "$applications_dir/$APP.desktop" "$autostart_dir/$APP.desktop"
@@ -96,6 +122,7 @@ if [ "$action" = uninstall ]; then
     [ -d "$app_dir" ] || [ -e "$launcher" ] || fail "Eye Care Reminder is not installed for $scope ($app_dir)."
     stop_app >/dev/null
     remove_files
+    [ "$(id -u)" -eq 0 ] || remove_i3_autostart
     say "Eye Care Reminder has been removed for $scope."
     if [ "$scope" = "the current user" ]; then
         say "Your settings are kept in ${XDG_CONFIG_HOME:-$HOME/.config}/$APP (delete that folder to remove them)."
@@ -203,6 +230,7 @@ detect_package_manager() {
 # Package of a dependency for the package manager.
 package_name() {
     case "$1:$2" in
+        *:gnome-extension) echo gnome-shell-extension-appindicator ;;
         apt-get:python) echo python3 ;;
         apt-get:gi) echo python3-gi ;;
         apt-get:gtk) echo gir1.2-gtk-3.0 ;;
@@ -242,7 +270,8 @@ describe() {
         gtk) echo "GTK 3" ;;
         cairo) echo "cairo support for PyGObject (pycairo)" ;;
         indicator) echo "AppIndicator (tray icon outside Xfce)" ;;
-        indicator-unity) echo "AppIndicator (tray icon in Unity's panel)" ;;
+        indicator-unity) echo "AppIndicator (tray icon in the panel)" ;;
+        gnome-extension) echo "GNOME Shell extension \"AppIndicator and KStatusNotifierItem Support\" (tray icon)" ;;
     esac
 }
 
@@ -259,6 +288,45 @@ confirm() {
         ""|y|Y|yes|Yes) return 0 ;;
     esac
     return 1
+}
+
+# Sets desktop_id (xfce, unity, gnome, kde, i3, other, none) and desktop (its name).
+detect_desktop() {
+    desktop=${XDG_CURRENT_DESKTOP:-}
+    case ":$(printf '%s' "$desktop" | tr '[:upper:]' '[:lower:]'):" in
+        *:xfce:*) desktop_id=xfce desktop=Xfce ;;
+        *:unity*) desktop_id=unity desktop=Unity ;;
+        *:budgie:*|*:gnome-flashback:*|*:pantheon:*) desktop_id=other ;;
+        *:gnome:*) desktop_id=gnome desktop=GNOME ;;
+        *:kde:*) desktop_id=kde desktop="KDE Plasma" ;;
+        *:i3:*) desktop_id=i3 desktop=i3 ;;
+        ::)
+            # i3 often leaves XDG_CURRENT_DESKTOP unset; sway sets I3SOCK too, but also SWAYSOCK.
+            if { [ -n "${I3SOCK:-}" ] && [ -z "${SWAYSOCK:-}" ]; } \
+                || [ "${XDG_SESSION_DESKTOP:-}" = i3 ] || [ "${DESKTOP_SESSION:-}" = i3 ]; then
+                desktop_id=i3 desktop=i3
+            else
+                desktop_id=none
+            fi
+            ;;
+        *) desktop_id=other ;;
+    esac
+}
+
+# GNOME Shell shows AppIndicators only with this extension (built into Ubuntu).
+GNOME_EXTENSION_IDS="ubuntu-appindicators@ubuntu.com appindicatorsupport@rgcjonas.gmail.com"
+
+# Prints the id of the installed AppIndicator extension, if any.
+gnome_extension_id() {
+    for id in $GNOME_EXTENSION_IDS; do
+        for dir in "${XDG_DATA_HOME:-$HOME/.local/share}/gnome-shell/extensions" \
+            /usr/share/gnome-shell/extensions /usr/local/share/gnome-shell/extensions; do
+            if [ -d "$dir/$id" ]; then
+                echo "$id"
+                return
+            fi
+        done
+    done
 }
 
 # Checks the system and prints a report. Sets: incompatible (yes/no), missing
@@ -281,16 +349,18 @@ check_system() {
         incompatible=yes
     fi
 
-    desktop=${XDG_CURRENT_DESKTOP:-}
-    case "$(printf '%s' "$desktop" | tr '[:upper:]' '[:lower:]')" in
-        *xfce*) report ok "Desktop: Xfce" ;;
-        unity*|*:unity*)
-            report ok "Desktop: Unity"
+    detect_desktop
+    case "$desktop_id" in
+        xfce) report ok "Desktop: Xfce" ;;
+        unity|gnome|kde)
+            report ok "Desktop: $desktop"
+            # Their panels show AppIndicators (Unity, GNOME: only those).
             required_modules="$REQUIRED_MODULES indicator"
             ;;
-        "") report note "No desktop session found (e.g. over SSH): the app starts at the next login" ;;
+        i3) report ok "Desktop: i3" ;;
+        none) report note "No desktop session found (e.g. over SSH): the app starts at the next login" ;;
         *)
-            report note "Desktop: $desktop is not officially supported (made for Xfce): the reminders work, the tray icon depends on the desktop"
+            report note "Desktop: $desktop is not officially supported (made for Xfce, Unity, GNOME, KDE Plasma and i3): the reminders work, the tray icon depends on the desktop"
             unsupported_desktop=yes
             ;;
     esac
@@ -328,6 +398,26 @@ check_system() {
             missing="$missing $module"
         fi
     done
+    if [ "$desktop_id" = gnome ]; then
+        if [ -n "$(gnome_extension_id)" ]; then
+            report ok "$(describe gnome-extension)"
+        else
+            report missing "$(describe gnome-extension)"
+            missing="$missing gnome-extension"
+        fi
+    fi
+    if [ "$desktop_id" = i3 ] && [ "$(id -u)" -ne 0 ]; then
+        i3_config=$(i3_config_file)
+        if [ -n "$i3_config" ] && i3_runs_xdg_autostart "$i3_config"; then
+            report ok "Autostart: the i3 config starts dex (XDG autostart)"
+        elif [ -n "$i3_config" ] && grep -qF "$I3_MARKER" "$i3_config"; then
+            report ok "Autostart: in $i3_config"
+        elif [ -n "$i3_config" ] && [ "${i3_config#"$HOME"/}" != "$i3_config" ]; then
+            report note "Autostart: the installer adds Eye Care Reminder to $i3_config"
+        else
+            report note "Autostart: no i3 config of yours with dex found; add the line the installer prints to your i3 config"
+        fi
+    fi
     if [ "$unsupported_desktop" = yes ]; then
         if has_module indicator; then
             report ok "$(describe indicator)"
@@ -369,6 +459,8 @@ if [ -n "$missing" ]; then
     sh -c "$command" || fail "Installing the dependencies failed."
     find_python
     { [ -n "$python" ] && has_required_modules "$modules"; } || fail "The dependencies are still missing after the installation."
+    [ "$desktop_id" != gnome ] || [ -n "$(gnome_extension_id)" ] \
+        || fail "The GNOME extension is still missing after the installation."
     say "Dependencies installed."
 fi
 
@@ -421,6 +513,34 @@ desktop_entry "" > "$applications_dir/$APP.desktop"
 desktop_entry " --autostart" > "$autostart_dir/$APP.desktop"
 if command -v update-desktop-database >/dev/null 2>&1; then
     update-desktop-database -q "$applications_dir" >/dev/null 2>&1 || true
+fi
+
+# Desktop specific steps: enable GNOME's AppIndicator extension, i3 autostart.
+if [ "$desktop_id" = gnome ] && [ "$(id -u)" -ne 0 ]; then
+    extension=$(gnome_extension_id)
+    if [ -n "$extension" ] && command -v gsettings >/dev/null 2>&1 \
+        && ! gsettings get org.gnome.shell enabled-extensions 2>/dev/null | grep -qF "'$extension'"; then
+        if ! is_interactive || confirm "Enable the GNOME extension for the tray icon ($extension)?"; then
+            if command -v gnome-extensions >/dev/null 2>&1 && gnome-extensions enable "$extension" 2>/dev/null; then
+                say "Enabled the GNOME extension $extension."
+            else
+                say "Log out and back in, then enable \"AppIndicator and KStatusNotifierItem Support\" in the Extensions app to see the tray icon."
+            fi
+        fi
+    fi
+fi
+i3_line="exec --no-startup-id \"$launcher\" --autostart"
+if [ "$desktop_id" = i3 ]; then
+    i3_config=$(i3_config_file)
+    if [ "$(id -u)" -eq 0 ] || [ -z "$i3_config" ] || [ "${i3_config#"$HOME"/}" = "$i3_config" ]; then
+        if [ -z "$i3_config" ] || ! i3_runs_xdg_autostart "$i3_config"; then
+            say "i3: to start Eye Care Reminder at login, add this line to your i3 config:"
+            say "    $i3_line"
+        fi
+    elif ! i3_runs_xdg_autostart "$i3_config" && ! grep -qF "$I3_MARKER" "$i3_config"; then
+        printf '%s\n%s\n' "$I3_MARKER" "$i3_line" >> "$i3_config"
+        say "Added Eye Care Reminder to the autostart in $i3_config."
+    fi
 fi
 
 say "Installed to $app_dir."

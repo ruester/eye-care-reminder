@@ -19,12 +19,13 @@ or fails, the reminder falls back step by step until one works:
 """
 
 import os
+import subprocess
 import sys
 import time
 
 from gi.repository import Gdk, Gio, GLib, Gtk, Pango
 
-from . import APP_NAME, countdown, fallback, painting
+from . import APP_NAME, countdown, desktop, fallback, painting
 
 SCREEN_MARGIN = 12
 COUNTDOWN_TICK_MS = 30
@@ -41,6 +42,24 @@ def own_popups_supported():
 
 def _log(text):
     print("eye-care-reminder: %s" % text, file=sys.stderr)
+
+
+_i3_cache = {"time": 0.0, "output": None}
+
+
+def _i3_work_area(monitor):
+    """Area of the visible i3 workspace without i3bar (cached for a second: the popup
+    is placed on every size change)."""
+    now = time.monotonic()
+    if now - _i3_cache["time"] > 1:
+        _i3_cache["time"] = now
+        try:
+            _i3_cache["output"] = subprocess.run(
+                ["i3-msg", "-t", "get_workspaces"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                timeout=2, check=True, universal_newlines=True).stdout
+        except (OSError, subprocess.SubprocessError):
+            _i3_cache["output"] = None
+    return desktop.i3_work_area(_i3_cache["output"], monitor) if _i3_cache["output"] else None
 
 
 def show(title, message, timeout_ms, icon_path, on_closed=None):
@@ -160,6 +179,12 @@ class NotificationPopup(Gtk.Window):
         display = Gdk.Display.get_default()
         monitor = display.get_primary_monitor() or display.get_monitor(0)
         area = monitor.get_workarea()
+        if desktop.is_i3():
+            geometry = monitor.get_geometry()
+            i3_area = _i3_work_area((geometry.x, geometry.y, geometry.width, geometry.height))
+            if i3_area:
+                area = Gdk.Rectangle()
+                area.x, area.y, area.width, area.height = i3_area
         position = (area.x + area.width - width - SCREEN_MARGIN, area.y + area.height - height - SCREEN_MARGIN)
         if self.get_position() != position:
             self.move(*position)
