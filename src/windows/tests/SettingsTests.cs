@@ -28,7 +28,7 @@ namespace EyeCareReminder.Tests
         public void DefaultsWhenNothingIsStored()
         {
             Assert.False(Settings.Exists());
-            Assert.Equal(60, Settings.LoadIntervalMinutes());
+            Assert.Equal(20, Settings.LoadIntervalMinutes());
             Assert.True(Settings.LoadAutoHide());
             Assert.Equal(60, Settings.LoadAutoHideSeconds());
             Assert.Null(Settings.LoadLanguage());

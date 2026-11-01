@@ -154,7 +154,7 @@ suffixes such as `-rc1`.
   checkbox) opens the settings dialog so the user sees that the app is running
   (Windows 11 hides new tray icons in the overflow by default).
 - Settings (under `HKCU\Software\EyeCareReminder`, see `Settings.cs`), DWORDs
-  `IntervalMinutes` (default 60, range 1-1440), `AutoHide` (0/1, default 1)
+  `IntervalMinutes` (default 20 (20-20-20 rule), range 1-1440), `AutoHide` (0/1, default 1)
   and `AutoHideSeconds` (default 60, range 1-300), and the string `Language`
   (also written by the installer). "Test notification" uses the auto-hide
   values and the language currently selected in the dialog, even if unsaved.

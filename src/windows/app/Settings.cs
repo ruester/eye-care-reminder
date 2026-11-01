@@ -5,7 +5,7 @@ namespace EyeCareReminder
     /// <summary>Per-user settings stored in HKCU\Software\EyeCareReminder.</summary>
     internal static class Settings
     {
-        public const int DefaultIntervalMinutes = 60;
+        public const int DefaultIntervalMinutes = 20;
         public const int MinIntervalMinutes = 1;
         public const int MaxIntervalMinutes = 24 * 60;
 

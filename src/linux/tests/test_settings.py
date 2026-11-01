@@ -23,7 +23,7 @@ class SettingsTests(unittest.TestCase):
     def test_defaults_without_file(self):
         s = Settings.load(self.path)
         self.assertFalse(s.exists)
-        self.assertEqual(60, s.interval_minutes)
+        self.assertEqual(20, s.interval_minutes)
         self.assertTrue(s.auto_hide)
         self.assertEqual(60, s.auto_hide_seconds)
         self.assertIsNone(s.language)
@@ -48,10 +48,10 @@ class SettingsTests(unittest.TestCase):
 
     def test_out_of_range_and_invalid_values_use_defaults(self):
         cases = [
-            ("interval_minutes = 0", "interval_minutes", 60),
-            ("interval_minutes = 1441", "interval_minutes", 60),
+            ("interval_minutes = 0", "interval_minutes", 20),
+            ("interval_minutes = 1441", "interval_minutes", 20),
             ("interval_minutes = 1440", "interval_minutes", 1440),
-            ("interval_minutes = abc", "interval_minutes", 60),
+            ("interval_minutes = abc", "interval_minutes", 20),
             ("auto_hide_seconds = 0", "auto_hide_seconds", 60),
             ("auto_hide_seconds = 301", "auto_hide_seconds", 60),
             ("auto_hide_seconds = 1", "auto_hide_seconds", 1),
@@ -76,7 +76,7 @@ class SettingsTests(unittest.TestCase):
                 self.write(text)
                 s = Settings.load(self.path)
                 self.assertFalse(s.exists)
-                self.assertEqual(60, s.interval_minutes)
+                self.assertEqual(20, s.interval_minutes)
 
     def test_default_path(self):
         self.assertEqual("/cfg/eye-care-reminder/settings.ini",

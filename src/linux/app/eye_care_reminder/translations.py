@@ -73,7 +73,7 @@ ENGLISH = Texts(
     save="Save",
     cancel="Cancel",
     break_title="Time for an eye break",
-    break_message="Look at something at least 6 metres (20 feet) away for 20 seconds and blink a few times.",
+    break_message="20-20-20 rule: look at something at least 6 metres (20 feet) away for 20 seconds and blink a few times.",
     running_title="Eye Care Reminder is running",
     running_message="Your next eye break is at {0}. Click the eye icon in the notification area to change the interval.",
 )
@@ -98,7 +98,7 @@ GERMAN = Texts(
     save="Speichern",
     cancel="Abbrechen",
     break_title="Zeit für eine Augenpause",
-    break_message="Schauen Sie 20 Sekunden lang auf etwas, das mindestens 6 Meter entfernt ist, und blinzeln Sie ein paar Mal.",
+    break_message="20-20-20-Regel: Schauen Sie 20 Sekunden lang auf etwas, das mindestens 6 Meter entfernt ist, und blinzeln Sie ein paar Mal.",
     running_title="Eye Care Reminder läuft",
     running_message="Ihre nächste Augenpause ist um {0}. Klicken Sie auf das Augensymbol im Infobereich, um das Intervall zu ändern.",
 )
@@ -123,7 +123,7 @@ FRENCH = Texts(
     save="Enregistrer",
     cancel="Annuler",
     break_title="C'est l'heure de reposer vos yeux",
-    break_message="Regardez quelque chose situé à au moins 6 mètres pendant 20 secondes et clignez des yeux plusieurs fois.",
+    break_message="Règle 20-20-20 : regardez quelque chose situé à au moins 6 mètres pendant 20 secondes et clignez des yeux plusieurs fois.",
     running_title="Eye Care Reminder est lancé",
     running_message="Votre prochaine pause est à {0}. Cliquez sur l'icône de l'œil dans la zone de notification pour modifier l'intervalle.",
 )
@@ -148,7 +148,7 @@ ITALIAN = Texts(
     save="Salva",
     cancel="Annulla",
     break_title="È ora di una pausa per gli occhi",
-    break_message="Guarda qualcosa ad almeno 6 metri di distanza per 20 secondi e sbatti le palpebre alcune volte.",
+    break_message="Regola 20-20-20: guarda qualcosa ad almeno 6 metri di distanza per 20 secondi e sbatti le palpebre alcune volte.",
     running_title="Eye Care Reminder è in esecuzione",
     running_message="La prossima pausa per gli occhi è alle {0}. Fai clic sull'icona dell'occhio nell'area di notifica per modificare l'intervallo.",
 )
@@ -173,7 +173,7 @@ SPANISH = Texts(
     save="Guardar",
     cancel="Cancelar",
     break_title="Hora de descansar la vista",
-    break_message="Mira algo que esté al menos a 6 metros de distancia durante 20 segundos y parpadea varias veces.",
+    break_message="Regla 20-20-20: mira algo que esté al menos a 6 metros de distancia durante 20 segundos y parpadea varias veces.",
     running_title="Eye Care Reminder se está ejecutando",
     running_message="Tu próximo descanso visual es a las {0}. Haz clic en el icono del ojo en el área de notificación para cambiar el intervalo.",
 )
@@ -198,7 +198,7 @@ PORTUGUESE = Texts(
     save="Guardar",
     cancel="Cancelar",
     break_title="Hora de uma pausa para os olhos",
-    break_message="Olhe para algo a pelo menos 6 metros de distância durante 20 segundos e pestaneje algumas vezes.",
+    break_message="Regra 20-20-20: olhe para algo a pelo menos 6 metros de distância durante 20 segundos e pestaneje algumas vezes.",
     running_title="O Eye Care Reminder está em execução",
     running_message="A sua próxima pausa para os olhos é às {0}. Clique no ícone do olho na área de notificação para alterar o intervalo.",
 )
@@ -223,7 +223,7 @@ DUTCH = Texts(
     save="Opslaan",
     cancel="Annuleren",
     break_title="Tijd voor een oogpauze",
-    break_message="Kijk 20 seconden lang naar iets dat minstens 6 meter verderop is en knipper een paar keer met je ogen.",
+    break_message="20-20-20-regel: kijk 20 seconden lang naar iets dat minstens 6 meter verderop is en knipper een paar keer met je ogen.",
     running_title="Eye Care Reminder is actief",
     running_message="Je volgende oogpauze is om {0}. Klik op het oogpictogram in het systeemvak om het interval te wijzigen.",
 )
@@ -248,7 +248,7 @@ NORWEGIAN = Texts(
     save="Lagre",
     cancel="Avbryt",
     break_title="Tid for en øyepause",
-    break_message="Se på noe som er minst 6 meter unna i 20 sekunder, og blunk noen ganger.",
+    break_message="20-20-20-regelen: se på noe som er minst 6 meter unna i 20 sekunder, og blunk noen ganger.",
     running_title="Eye Care Reminder kjører",
     running_message="Neste øyepause er kl. {0}. Klikk på øyeikonet i varslingsområdet for å endre intervallet.",
 )
@@ -273,7 +273,7 @@ SWEDISH = Texts(
     save="Spara",
     cancel="Avbryt",
     break_title="Dags för en ögonpaus",
-    break_message="Titta på något som är minst 6 meter bort i 20 sekunder och blinka några gånger.",
+    break_message="20-20-20-regeln: titta på något som är minst 6 meter bort i 20 sekunder och blinka några gånger.",
     running_title="Eye Care Reminder körs",
     running_message="Nästa ögonpaus är kl. {0}. Klicka på ögonikonen i meddelandefältet för att ändra intervallet.",
 )
@@ -298,7 +298,7 @@ FINNISH = Texts(
     save="Tallenna",
     cancel="Peruuta",
     break_title="Aika pitää silmätauko",
-    break_message="Katso vähintään 6 metrin päässä olevaa kohdetta 20 sekunnin ajan ja räpäytä silmiä muutaman kerran.",
+    break_message="20-20-20-sääntö: katso vähintään 6 metrin päässä olevaa kohdetta 20 sekunnin ajan ja räpäytä silmiä muutaman kerran.",
     running_title="Eye Care Reminder on käynnissä",
     running_message="Seuraava silmätauko on klo {0}. Voit muuttaa väliä napsauttamalla silmäkuvaketta ilmaisinalueella.",
 )
@@ -323,7 +323,7 @@ CZECH = Texts(
     save="Uložit",
     cancel="Zrušit",
     break_title="Čas na přestávku pro oči",
-    break_message="Dívejte se 20 sekund na něco, co je alespoň 6 metrů daleko, a několikrát mrkněte.",
+    break_message="Pravidlo 20-20-20: dívejte se 20 sekund na něco, co je alespoň 6 metrů daleko, a několikrát mrkněte.",
     running_title="Eye Care Reminder je spuštěný",
     running_message="Další přestávka pro oči je v {0}. Interval změníte kliknutím na ikonu oka v oznamovací oblasti.",
 )
@@ -348,7 +348,7 @@ POLISH = Texts(
     save="Zapisz",
     cancel="Anuluj",
     break_title="Czas na przerwę dla oczu",
-    break_message="Patrz przez 20 sekund na coś oddalonego o co najmniej 6 metrów i kilka razy mrugnij.",
+    break_message="Zasada 20-20-20: patrz przez 20 sekund na coś oddalonego o co najmniej 6 metrów i kilka razy mrugnij.",
     running_title="Eye Care Reminder działa",
     running_message="Następna przerwa dla oczu o {0}. Kliknij ikonę oka w obszarze powiadomień, aby zmienić interwał.",
 )
@@ -373,7 +373,7 @@ CROATIAN = Texts(
     save="Spremi",
     cancel="Odustani",
     break_title="Vrijeme je za stanku za oči",
-    break_message="Gledajte 20 sekundi u nešto što je udaljeno najmanje 6 metara i nekoliko puta trepnite.",
+    break_message="Pravilo 20-20-20: gledajte 20 sekundi u nešto što je udaljeno najmanje 6 metara i nekoliko puta trepnite.",
     running_title="Eye Care Reminder je pokrenut",
     running_message="Sljedeća stanka za oči je u {0}. Kliknite ikonu oka u području obavijesti da biste promijenili interval.",
 )

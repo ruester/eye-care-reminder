@@ -7,7 +7,7 @@ values fall back to the defaults.
 import configparser
 import os
 
-DEFAULT_INTERVAL_MINUTES = 60
+DEFAULT_INTERVAL_MINUTES = 20
 MIN_INTERVAL_MINUTES = 1
 MAX_INTERVAL_MINUTES = 24 * 60
 
