@@ -5,6 +5,13 @@
 # temporary directory and runs installer/install.sh with the given arguments.
 set -eu
 
+for tool in awk tail tar gzip mktemp; do
+    if ! command -v "$tool" >/dev/null 2>&1; then
+        echo "error: the installer needs '$tool', which is not installed." >&2
+        exit 1
+    fi
+done
+
 payload_line=$(awk '/^__PAYLOAD_BELOW__$/ { print NR + 1; exit 0 }' "$0")
 workdir=$(mktemp -d)
 trap 'rm -rf "$workdir"' EXIT

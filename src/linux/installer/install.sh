@@ -14,10 +14,12 @@ PAYLOAD_DIR=$(cd "$(dirname "$0")/.." && pwd)
 
 usage() {
     cat <<USAGE
-Usage: $APP-<version>-linux.bin [--no-launch] [--uninstall]
+Usage: $APP-<version>-linux.bin [--check] [--no-launch] [--uninstall]
 
 Installs Eye Care Reminder for the current user, or for all users when run as root.
+Checks the system for compatibility and missing dependencies first.
 
+  --check        Only check the system, don't install anything.
   --no-launch    Don't start the app after installing (it starts at the next login).
   --uninstall    Remove Eye Care Reminder (settings in ~/.config/$APP are kept).
   -h, --help     Show this help.
@@ -34,6 +36,7 @@ case "$(basename "$0")" in
 esac
 for arg in "$@"; do
     case "$arg" in
+        --check) action=check ;;
         --no-launch) launch=no ;;
         --uninstall) action=uninstall ;;
         -h|--help) usage; exit 0 ;;
@@ -100,56 +103,274 @@ if [ "$action" = uninstall ]; then
     exit 0
 fi
 
-# --- Requirements: Python 3 with GTK 3 (PyGObject) and cairo ---
+# --- Compatibility check (before anything is installed) ---
+# Supported: Linux with Python 3.8+, PyGObject, GTK 3 and pycairo; made for Xfce
+# (other desktops work with limitations). EYE_CARE_REMINDER_PYTHON overrides the
+# Python interpreter (used by the tests).
+
+# Prints the Python version and the available modules, e.g. "3.12 gi gtk cairo indicator".
+PROBE='
+import sys
+found = ["%d.%d" % sys.version_info[:2]]
+try:
+    import gi
+    found.append("gi")
+    try:
+        gi.require_version("Gtk", "3.0")
+        found.append("gtk")
+    except ValueError:
+        pass
+    try:
+        gi.require_foreign("cairo")
+        found.append("cairo")
+    except ImportError:
+        pass
+    for namespace in ("AyatanaAppIndicator3", "AppIndicator3"):
+        try:
+            gi.require_version(namespace, "0.1")
+            found.append("indicator")
+            break
+        except ValueError:
+            pass
+except ImportError:
+    pass
+print(" ".join(found))
+'
+REQUIRED_MODULES="gi gtk cairo"
+
+python_candidates() {
+    if [ -n "${EYE_CARE_REMINDER_PYTHON:-}" ]; then
+        echo "$EYE_CARE_REMINDER_PYTHON"
+        return
+    fi
+    echo /usr/bin/python3
+    command -v python3 2>/dev/null || true
+}
+
+has_module() { case " $modules " in *" $1 "*) return 0 ;; esac; return 1; }
+
+# Whether the probe result $1 contains every required module.
+has_required_modules() {
+    for module in $REQUIRED_MODULES; do
+        case " $1 " in
+            *" $module "*) ;;
+            *) return 1 ;;
+        esac
+    done
+}
+
+# Sets python, python_version and modules: the first interpreter with all required
+# modules, else the first one found (to report what is missing).
 find_python() {
-    for candidate in /usr/bin/python3 "$(command -v python3 2>/dev/null || true)"; do
-        if [ -n "$candidate" ] && [ -x "$candidate" ] && "$candidate" -c '
-import gi
-gi.require_version("Gtk", "3.0")
-gi.require_foreign("cairo")
-' >/dev/null 2>&1; then
-            echo "$candidate"
+    python=""
+    python_version=""
+    modules=""
+    for candidate in $(python_candidates); do
+        [ -x "$candidate" ] || continue
+        result=$("$candidate" -c "$PROBE" 2>/dev/null) || continue
+        case "$result" in
+            [0-9]*) ;;
+            *) continue ;;
+        esac
+        if [ -z "$python" ] || has_required_modules "$result"; then
+            python=$candidate
+            python_version=${result%% *}
+            modules=${result#"$python_version"}
+        fi
+        if has_required_modules "$result"; then
             return
         fi
     done
 }
 
+python_version_ok() {
+    major=${python_version%%.*}
+    minor=${python_version#*.}
+    [ "$major" -gt 3 ] || { [ "$major" -eq 3 ] && [ "$minor" -ge 8 ]; }
+}
+
+detect_package_manager() {
+    for pm in apt-get dnf zypper pacman; do
+        if command -v "$pm" >/dev/null 2>&1; then
+            echo "$pm"
+            return
+        fi
+    done
+}
+
+# Package of a dependency for the package manager.
+package_name() {
+    case "$1:$2" in
+        apt-get:python) echo python3 ;;
+        apt-get:gi) echo python3-gi ;;
+        apt-get:gtk) echo gir1.2-gtk-3.0 ;;
+        apt-get:cairo) echo python3-gi-cairo ;;
+        apt-get:indicator) echo gir1.2-ayatanaappindicator3-0.1 ;;
+        dnf:python) echo python3 ;;
+        dnf:gi) echo python3-gobject ;;
+        dnf:gtk) echo gtk3 ;;
+        dnf:cairo) echo python3-cairo ;;
+        dnf:indicator) echo libayatana-appindicator-gtk3 ;;
+        zypper:python) echo python3 ;;
+        zypper:gi) echo python3-gobject ;;
+        zypper:gtk) echo typelib-1_0-Gtk-3_0 ;;
+        zypper:cairo) echo python3-gobject-cairo ;;
+        zypper:indicator) echo typelib-1_0-AyatanaAppIndicator3-0_1 ;;
+        pacman:python) echo python ;;
+        pacman:gi) echo python-gobject ;;
+        pacman:gtk) echo gtk3 ;;
+        pacman:cairo) echo python-cairo ;;
+        pacman:indicator) echo libayatana-appindicator ;;
+    esac
+}
+
 install_command() {
-    if command -v apt-get >/dev/null 2>&1; then
-        echo "apt-get install -y python3 python3-gi python3-gi-cairo gir1.2-gtk-3.0"
-    elif command -v dnf >/dev/null 2>&1; then
-        echo "dnf install -y python3 python3-gobject python3-cairo gtk3"
-    elif command -v zypper >/dev/null 2>&1; then
-        echo "zypper --non-interactive install python3 python3-gobject python3-gobject-cairo python3-gobject-Gdk typelib-1_0-Gtk-3_0"
-    elif command -v pacman >/dev/null 2>&1; then
-        echo "pacman -S --needed --noconfirm python python-gobject python-cairo gtk3"
+    case "$1" in
+        apt-get) echo "apt-get install -y" ;;
+        dnf) echo "dnf install -y" ;;
+        zypper) echo "zypper --non-interactive install" ;;
+        pacman) echo "pacman -S --needed --noconfirm" ;;
+    esac
+}
+
+describe() {
+    case "$1" in
+        python) echo "Python 3" ;;
+        gi) echo "PyGObject (GObject introspection for Python)" ;;
+        gtk) echo "GTK 3" ;;
+        cairo) echo "cairo support for PyGObject (pycairo)" ;;
+        indicator) echo "AppIndicator (tray icon outside Xfce)" ;;
+    esac
+}
+
+report() { printf '  %-8s %s\n' "$1" "$2"; }
+
+is_interactive() { (: </dev/tty) 2>/dev/null; }
+
+# Asks a yes/no question on the terminal (default yes); "no" without a terminal.
+confirm() {
+    is_interactive || return 1
+    printf '%s [Y/n] ' "$1" >/dev/tty
+    read -r answer </dev/tty || return 1
+    case "$answer" in
+        ""|y|Y|yes|Yes) return 0 ;;
+    esac
+    return 1
+}
+
+# Checks the system and prints a report. Sets: incompatible (yes/no), missing
+# (required dependencies), unsupported_desktop (yes/no).
+check_system() {
+    incompatible=no
+    missing=""
+    unsupported_desktop=no
+    say "Checking the system for compatibility ..."
+
+    distribution=""
+    if [ -r /etc/os-release ]; then
+        # shellcheck disable=SC1091
+        distribution=$(. /etc/os-release && printf '%s' "${PRETTY_NAME:-${NAME:-}}")
+    fi
+    if [ "$(uname -s)" = Linux ]; then
+        report ok "Linux $(uname -r) ($(uname -m))${distribution:+, $distribution}"
+    else
+        report error "Linux is required (this is $(uname -s))"
+        incompatible=yes
+    fi
+
+    desktop=${XDG_CURRENT_DESKTOP:-}
+    case "$(printf '%s' "$desktop" | tr '[:upper:]' '[:lower:]')" in
+        *xfce*) report ok "Desktop: Xfce" ;;
+        "") report note "No desktop session found (e.g. over SSH): the app starts at the next login" ;;
+        *)
+            report note "Desktop: $desktop is not officially supported (made for Xfce): the reminders work, the tray icon depends on the desktop"
+            unsupported_desktop=yes
+            ;;
+    esac
+
+    case "${XDG_SESSION_TYPE:-}" in
+        x11) report ok "Display: X11" ;;
+        wayland)
+            if [ -n "${DISPLAY:-}" ]; then
+                report ok "Display: Wayland with XWayland"
+            else
+                report note "Display: Wayland without XWayland: reminders are shown as standard notifications"
+            fi
+            ;;
+    esac
+
+    find_python
+    if [ -z "$python" ]; then
+        report missing "$(describe python)"
+        missing="python $REQUIRED_MODULES"
+        return
+    fi
+    if ! python_version_ok; then
+        report error "Python 3.8 or later is required (found $python_version: $python)"
+        incompatible=yes
+        return
+    fi
+    report ok "Python $python_version ($python)"
+    for module in $REQUIRED_MODULES; do
+        if has_module "$module"; then
+            report ok "$(describe "$module")"
+        else
+            report missing "$(describe "$module")"
+            missing="$missing $module"
+        fi
+    done
+    if [ "$unsupported_desktop" = yes ]; then
+        if has_module indicator; then
+            report ok "$(describe indicator)"
+        else
+            package=$(package_name "$(detect_package_manager)" indicator)
+            report note "Optional: $(describe indicator) is not installed${package:+ (package $package)}"
+        fi
     fi
 }
 
-python=$(find_python)
-if [ -z "$python" ]; then
-    say "Eye Care Reminder needs Python 3 with GTK 3 (PyGObject), which is not installed."
-    command=$(install_command)
-    if [ -z "$command" ]; then
-        fail "Install Python 3, PyGObject (GTK 3) and pycairo with your package manager, then run this installer again."
+check_system
+
+if [ "$incompatible" = yes ]; then
+    fail "This system is not compatible with Eye Care Reminder."
+fi
+
+if [ -n "$missing" ]; then
+    pm=$(detect_package_manager)
+    packages=""
+    for dependency in $missing; do
+        packages="$packages $(package_name "$pm" "$dependency")"
+    done
+    if [ -z "$pm" ]; then
+        names=""
+        for dependency in $missing; do
+            names="$names, $(describe "$dependency")"
+        done
+        fail "Missing dependencies: ${names#, }. Install them with your package manager, then run this installer again."
     fi
-    if [ "$(id -u)" -eq 0 ]; then
-        run_command=$command
-    else
-        run_command="sudo $command"
+    command="$(install_command "$pm")$packages"
+    [ "$(id -u)" -eq 0 ] || command="sudo $command"
+    if [ "$action" = check ]; then
+        say "Missing dependencies can be installed with: $command"
+        exit 1
     fi
-    answer=n
-    if (: </dev/tty) 2>/dev/null; then
-        printf 'Install it now with "%s"? [Y/n] ' "$run_command" >/dev/tty
-        read -r answer </dev/tty || answer=n
-        [ -n "$answer" ] || answer=y
+    if ! confirm "Install the missing dependencies now with \"$command\"?"; then
+        fail "Install the missing dependencies with \"$command\", then run this installer again."
     fi
-    case "$answer" in
-        y|Y|yes|Yes) sh -c "$run_command" || fail "Installing the requirements failed." ;;
-        *) fail "Install the requirements with \"$run_command\", then run this installer again." ;;
-    esac
-    python=$(find_python)
-    [ -n "$python" ] || fail "Python 3 with GTK 3 is still not available."
+    sh -c "$command" || fail "Installing the dependencies failed."
+    find_python
+    { [ -n "$python" ] && has_required_modules "$modules"; } || fail "The dependencies are still missing after the installation."
+    say "Dependencies installed."
+fi
+
+if [ "$action" = check ]; then
+    say "This system is compatible with Eye Care Reminder."
+    exit 0
+fi
+
+if [ "$unsupported_desktop" = yes ] && is_interactive && ! confirm "Install Eye Care Reminder on $desktop anyway?"; then
+    say "Installation cancelled."
+    exit 1
 fi
 
 # --- Install (upgrades replace the previous version) ---
@@ -196,11 +417,6 @@ fi
 say "Installed to $app_dir."
 say "Eye Care Reminder starts automatically when you log in; it is also in the application menu."
 say "To uninstall, run: sh \"$app_dir/uninstall.sh\""
-
-case "$(printf '%s' "${XDG_CURRENT_DESKTOP:-}" | tr '[:upper:]' '[:lower:]')" in
-    *xfce*|"") ;;
-    *) say "Note: Eye Care Reminder is made for Xfce. On other desktops the reminders work, but the tray icon needs a desktop with a notification area / AppIndicator support." ;;
-esac
 
 # Start it now (like the Windows installer's "Launch" checkbox): a fresh install
 # opens the settings, an upgrade restarts a running app silently.

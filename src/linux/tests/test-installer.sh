@@ -51,6 +51,20 @@ one_instance() { [ "$(instances)" -eq 1 ]; }
 no_instance() { [ "$(instances)" -eq 0 ]; }
 version_is() { [ "$("$launcher" --version)" = "Eye Care Reminder $1" ]; }
 
+echo "== Compatibility check"
+fakes=$(mktemp -d)
+printf '#!/bin/sh\necho 3.6\n' > "$fakes/old-python"
+printf '#!/bin/sh\necho 3.12 gi\n' > "$fakes/python-without-gtk"
+chmod +x "$fakes/old-python" "$fakes/python-without-gtk"
+check "--check passes" sh "$new_bin" --check
+check "--check reports compatible" sh -c "sh '$new_bin' --check | grep -q 'This system is compatible'"
+check "old Python is rejected" sh -c "! EYE_CARE_REMINDER_PYTHON='$fakes/old-python' sh '$new_bin' --check </dev/null"
+check "missing GTK is reported" sh -c "EYE_CARE_REMINDER_PYTHON='$fakes/python-without-gtk' sh '$new_bin' --check </dev/null | grep -q 'missing  GTK 3'"
+check "missing Python is reported" sh -c "EYE_CARE_REMINDER_PYTHON=/nonexistent sh '$new_bin' --check </dev/null | grep -q 'missing  Python 3'"
+check "no install with missing dependencies" sh -c "! EYE_CARE_REMINDER_PYTHON='$fakes/python-without-gtk' sh '$new_bin' </dev/null"
+check "nothing installed" test ! -e "$app_dir"
+rm -rf "$fakes"
+
 echo "== Install the old build (fresh install: the app starts and opens its settings)"
 sh "$old_bin"
 check "app directory" test -f "$app_dir/eye-care-reminder.py"

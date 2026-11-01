@@ -33,11 +33,12 @@ chmod +x eye-care-reminder-1.1.0-linux.bin
 
 (Without `chmod`, `sh eye-care-reminder-1.1.0-linux.bin` works too.) The installer
 
+- first checks the system: Linux, desktop (Xfce is supported; others work with limitations, it asks before installing there), display server, Python 3.8+ and the GTK 3 dependencies. `--check` runs only this check,
 - installs the app for your user to `~/.local/share/eye-care-reminder`, with an application menu entry and an autostart entry, and starts it,
-- needs Python 3 with GTK 3 (PyGObject). Most desktop distributions have it preinstalled; otherwise the installer shows the command (e.g. `sudo apt-get install python3-gi python3-gi-cairo gir1.2-gtk-3.0`) and offers to run it,
+- needs Python 3 with GTK 3 (PyGObject). Most desktop distributions have it preinstalled; otherwise the installer lists what is missing, shows the command for your package manager (apt, dnf, zypper or pacman, e.g. `sudo apt-get install -y python3-gi python3-gi-cairo gir1.2-gtk-3.0`) and offers to run it,
 - upgrades an installed version in place (settings in `~/.config/eye-care-reminder` are kept).
 
-Run it with `sudo` to install for all users instead (`/opt/eye-care-reminder`, autostart in `/etc/xdg/autostart`). `--help` lists the options (`--no-launch`, `--uninstall`).
+Run it with `sudo` to install for all users instead (`/opt/eye-care-reminder`, autostart in `/etc/xdg/autostart`). `--help` lists the options (`--check`, `--no-launch`, `--uninstall`).
 
 To uninstall:
 

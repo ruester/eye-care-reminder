@@ -93,14 +93,21 @@ suffixes such as `-rc1`.
     in `~/.local/share/applications`, icons in `~/.local/share/icons/hicolor`, autostart
     in `~/.config/autostart` (`--autostart`); as root: `/opt`, `/usr/local/...`,
     `/etc/xdg/autostart`;
-  - missing Python/GTK: prints the package manager command (apt/dnf/zypper/pacman) and
-    offers to run it (asks on `/dev/tty`);
+  - compatibility check first (`check_system`, also `--check` alone): Linux, desktop
+    (Xfce ok; other desktops: note + confirmation on a terminal), display server, Python
+    >= 3.8 and the modules gi/gtk/cairo (one probe script; AppIndicator is reported as
+    optional outside Xfce). Incompatible (not Linux, old Python): abort. Missing
+    dependencies: lists them, prints the package manager command (apt/dnf/zypper/pacman,
+    only the missing packages) and offers to run it (asks on `/dev/tty`; without a
+    terminal it aborts). `EYE_CARE_REMINDER_PYTHON` overrides the interpreter (tests);
+    `header.sh` checks awk/tail/tar/gzip/mktemp before extracting;
   - upgrade: stops running instances, replaces the files, restarts the app silently if it
     was running; a fresh install starts it with the settings dialog (not as root,
     not with `--no-launch`);
   - uninstall: `<app dir>/uninstall.sh` (a copy of install.sh) or `--uninstall`; keeps
     the settings file.
-- CI runs `src/linux/tests/test-installer.sh` under `xvfb-run dbus-run-session`: installs a
+- CI runs `src/linux/tests/test-installer.sh` under `xvfb-run dbus-run-session`: checks
+  `--check` and the rejection of fake old / incomplete Pythons, installs a
   0.0.0 build, checks files, running app and settings window (xdotool), single instance,
   upgrades while running (settings kept, restarted), uninstalls while running (no
   leftovers), and installs/uninstalls as root.
