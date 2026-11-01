@@ -297,7 +297,11 @@ trigger workflows, a `workflow_dispatch` does). The links therefore only
 switch once the new installers exist. Pull afterwards: main has that commit.
 
 Release by tagging main with an annotated tag whose message summarizes the
-release for users (always include a message when proposing tag commands):
+release for users (always include a message when proposing tag commands). The
+`release` job uses the tag message as the release notes on GitHub (first line,
+blank line, further paragraphs from additional `-m` options, e.g. a `- ...` list),
+followed by GitHub's generated "Full Changelog" link; it re-fetches the tag because
+`actions/checkout` makes it lightweight, and warns if the tag is not annotated:
 
 ```bash
 git pull && git tag -a v1.0.0 -m "Short summary of what's new" && git push origin v1.0.0

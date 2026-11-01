@@ -135,6 +135,18 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+      - name: Release notes from the tag message
+        run: |
+          # actions/checkout turns the pushed tag into a lightweight one: fetch the real tag object.
+          git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
+          if [ "$(git cat-file -t "$GITHUB_REF_NAME")" = tag ]; then
+            git tag -l --format='%(contents:subject)%0a%0a%(contents:body)' "$GITHUB_REF_NAME" > release-notes.md
+          else
+            echo "::warning::$GITHUB_REF_NAME is not an annotated tag, the release has no notes. Tag with: git tag -a $GITHUB_REF_NAME -m \"...\""
+            : > release-notes.md
+          fi
+          cat release-notes.md
       - uses: actions/download-artifact@v4
         with:
           path: dist
@@ -144,6 +156,8 @@ jobs:
           files: |
             dist/eye-care-reminder-*-linux.bin
             dist/eye-care-reminder-*-windows-x64.msi
+          # The tag message, followed by GitHub's generated notes ("Full Changelog" link).
+          body_path: release-notes.md
           generate_release_notes: true
 
   update-download-links:
