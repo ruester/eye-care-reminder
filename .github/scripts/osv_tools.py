@@ -47,14 +47,16 @@ def _check_url(url):
 def _post(url, data):
     _check_url(url)
     request = urllib.request.Request(url, json.dumps(data).encode(), {"Content-Type": "application/json"})
-    # Bandit B310 (file:// URLs): _check_url allows https://api.osv.dev only.
+    # Bandit B310 / Semgrep dynamic-urllib-use: _check_url allows https://api.osv.dev only.
+    # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
     with urllib.request.urlopen(request, timeout=60) as response:  # nosec B310
         return json.load(response)
 
 
 def _get(url):
     _check_url(url)
-    # Bandit B310 (file:// URLs): _check_url allows https://api.osv.dev only.
+    # Bandit B310 / Semgrep dynamic-urllib-use: _check_url allows https://api.osv.dev only.
+    # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
     with urllib.request.urlopen(url, timeout=60) as response:  # nosec B310
         return json.load(response)
 
