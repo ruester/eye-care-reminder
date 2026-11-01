@@ -119,12 +119,14 @@ function Get-Value($Database, [string]$Query) {
     $r = Invoke-Com $v Fetch InvokeMethod
     $value = if ($r) { Invoke-Com $r StringData GetProperty @(1) } else { $null }
     Invoke-Com $v Close InvokeMethod | Out-Null
+    [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($v)
     $value
 }
 
 foreach ($culture in $cultures.Keys) {
     if ($culture -eq 'en-US') { continue }
     $lcid = $cultures[$culture]
+    # Copy stays in the intermediate folder (COM may still hold it open).
     $copy = Join-Path $work "check-$culture.msi"
     Copy-Item $base $copy -Force
     $db = Invoke-Com $installer OpenDatabase InvokeMethod @($copy, $msiOpenDatabaseModeTransact)
@@ -133,7 +135,6 @@ foreach ($culture in $cultures.Keys) {
     $appLanguage = Get-Value $db "SELECT ``Value`` FROM ``Property`` WHERE ``Property`` = 'APPLANGUAGE'"
     $czechia = Get-Value $db "SELECT ``Text`` FROM ``ComboBox`` WHERE ``Property`` = 'APPLANGUAGE' AND ``Value`` = 'cs'"
     [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($db)
-    Remove-Item $copy
 
     $expectedCzechia = if ($culture -in 'cs-CZ', 'pl-PL', 'hr-HR') { 'Česko' } else { 'Cesko' }
     if ($productLanguage -ne [string]$lcid -or $appLanguage -ne $culture.Split('-')[0] -or $czechia -ne $expectedCzechia) {
