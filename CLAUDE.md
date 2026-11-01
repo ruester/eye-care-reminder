@@ -173,8 +173,8 @@ suffixes such as `-rc1`.
   `CloseTrayApp` when scheduled early (error 2613). `MSIRESTARTMANAGERCONTROL=Disable`
   avoids the "files in use" prompt.
 - CI tests this with `src/windows/installer/Test-Installer.ps1`: installs a
-  0.0.0 build with the Czech transform (checks product language 1029 and app
-  language `cs`), starts the app, upgrades to the current build (language must be
+  0.0.0 build with the Czech transform (`TRANSFORMS=:1029`, checks app
+  language `cs`; the uninstall entry always shows the base language 1033), starts the app, upgrades to the current build (language must be
   kept) and uninstalls, each while the app is running (no reboot, no leftovers,
   one product entry).
   Non-tag CI builds are versioned `0.0.<run number>` so the upgrade is real.
