@@ -9,7 +9,7 @@ Eye Care Reminder is a lightweight desktop application for Windows and Linux tha
 
 The Windows app and installer are available in English, German, French, Italian, Spanish, Portuguese, Dutch (Netherlands and Belgium), French (Belgium), Norwegian, Swedish, Finnish, Czech, Polish and Croatian. They start in the Windows display language; the installer and the settings dialog have a language switcher.
 
-**Downloads:** [Windows installer (.msi)](https://github.com/ruester/eye-care-reminder/releases/download/v1.0.1/eye-care-reminder-1.0.1-windows-x64.msi) · [Linux installer (.bin)](https://github.com/ruester/eye-care-reminder/releases/download/v1.0.1/eye-care-reminder-1.0.1-linux.bin) · [all releases](https://github.com/ruester/eye-care-reminder/releases)
+**Downloads:** [Windows installer (.msi)](https://github.com/ruester/eye-care-reminder/releases/download/v1.1.0/eye-care-reminder-1.1.0-windows-x64.msi) · [Linux installer (.bin)](https://github.com/ruester/eye-care-reminder/releases/download/v1.1.0/eye-care-reminder-1.1.0-linux.bin) · [all releases](https://github.com/ruester/eye-care-reminder/releases)
 
 ## Development
 
