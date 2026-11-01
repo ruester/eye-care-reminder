@@ -40,8 +40,11 @@ build/             build output; created by the just recipes, not tracked
 justfile           all build recipes
 .github/workflows/build.yml   CI + GitHub release publishing + download link update
 .github/workflows/pages.yml   website deployment (GitHub Pages)
+.github/workflows/security.yml  weekly security scan (issues with label "security")
+.github/dependabot.yml        Dependabot version updates (actions, NuGet test packages)
 .github/badges/               coverage badges, committed by CI
-.github/scripts/              publish-coverage-badge.sh (used by build.yml)
+.github/scripts/              publish-coverage-badge.sh (build.yml), security_issues.py and
+                              osv_tools.py (security.yml) with their unit tests (test_*.py)
 ```
 
 ## Building
@@ -277,6 +280,38 @@ suffixes such as `-rc1`.
   Source to "GitHub Actions" and run the workflow once; the site is then at
   https://ruester.github.io/eye-care-reminder/.
 - `build.yml` ignores changes that only touch the site.
+
+## Security
+
+- `.github/workflows/security.yml` runs every Friday 05:00 UTC (06:00 German winter time;
+  cron is UTC only) and on demand (Actions -> Security scan -> Run workflow). Jobs, each
+  writing SARIF:
+  - `secrets`: gitleaks over the whole git history (`--redact`);
+  - `dependencies`: OSV-Scanner over the lock files (the Windows test project has
+    `packages.lock.json`, `RestorePackagesWithLockFile`), and `osv_tools.py`, which reads
+    the WiX tool/extension versions from `build.yml` and asks the OSV API (no lock file
+    knows them; a test fails if the install lines change so the regexes no longer match);
+  - `workflows`: zizmor over `.github/workflows`;
+  - `code`: Bandit (Linux app + CI scripts, medium/high severity) and Semgrep registry
+    rule sets (security-audit, secrets, csharp, javascript; shell scripts: shellcheck in build.yml).
+  Exit codes for "findings found" are accepted; anything else fails the job (the report
+  still runs and then fails the workflow).
+- `report` job: `security_issues.py` creates one issue per (tool, rule, file) with label
+  `security` and a hidden fingerprint marker. Triage via the issue state: open = known;
+  closed as *not planned* = dismissed (never reported again); closed as *completed* =
+  fixed (reopened if found again). Open issues are closed automatically when their
+  finding disappears (only for tools that ran). Suppress a false positive in the code
+  instead where the tool supports it (`# nosec BXXX` with the reason on the line above,
+  `# zizmor: ignore[rule]`, `// nosemgrep`).
+- Scanner versions are pinned in the workflow's `env` (binaries with SHA-256 checks);
+  update them there. All actions are pinned to commit hashes with the version in a comment
+  (`uses: owner/action@<sha> # vX.Y.Z`); keep it that way for new actions, and keep
+  `persist-credentials: false` on checkouts unless a later step needs the git credentials.
+- Dependabot (`.github/dependabot.yml`): weekly grouped pull requests for the actions and
+  the NuGet test packages (Fridays 06:00 Europe/Berlin). Dependabot alerts and security
+  updates must be enabled in the repository settings (Advanced Security).
+- Not covered: the Linux app's runtime dependencies are distribution packages (Python,
+  PyGObject, GTK), updated by the user's distribution; the Windows app has no packages.
 
 ## Releases
 

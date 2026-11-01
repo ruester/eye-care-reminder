@@ -125,6 +125,10 @@ Run the app from the source tree:
 python3 src/linux/app/eye-care-reminder.py
 ```
 
+## Security
+
+A scheduled workflow scans the repository every Friday for security issues and opens an issue with the label `security` for each finding: secrets in the git history (gitleaks), vulnerable dependencies (OSV-Scanner and the OSV database, also for the WiX Toolset), the GitHub Actions workflows (zizmor) and the code (Bandit, Semgrep). Dependabot keeps the actions and the test packages up to date.
+
 ## License
 
 Eye Care Reminder is released under the [MIT License](LICENSE).
