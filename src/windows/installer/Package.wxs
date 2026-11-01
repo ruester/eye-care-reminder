@@ -19,6 +19,7 @@
   <Package Name="Eye Care Reminder"
            Manufacturer="Eye Care Reminder"
            Version="$(var.Version)"
+           ProductCode="$(var.ProductCode)"
            Language="!(loc.Lcid)"
            UpgradeCode="5b0d7c1e-3f4a-4e8b-9c2d-6a1f0e7b3d54"
            Scope="perMachine">

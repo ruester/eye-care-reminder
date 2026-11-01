@@ -93,12 +93,14 @@ function Get-CountryName($Database, [string]$Code) {
 }
 
 # --- 1. One MSI per culture ---
+# One product code for all cultures of this build (otherwise every transform would change it).
+$productCode = [guid]::NewGuid().ToString('B').ToUpperInvariant()
 foreach ($culture in $cultures.Keys) {
     Invoke-Native "wix build ($culture)" {
         wix build (Join-Path $installerDir 'Package.wxs') -arch x64 `
             -ext WixToolset.Util.wixext -ext WixToolset.UI.wixext `
             -culture $culture -loc (Join-Path $installerDir "l10n/$culture.wxl") `
-            -d Version=$Version -bindpath payload=$PayloadDir `
+            -d Version=$Version -d ProductCode=$productCode -bindpath payload=$PayloadDir `
             -o (Join-Path $work "$culture.msi")
     }
 }
@@ -162,11 +164,13 @@ foreach ($culture in $cultures.Keys) {
     $db = Open-Database $copy
     Invoke-Com $db ApplyTransform InvokeMethod @($transforms["$lcid"], 0) | Out-Null
     $productLanguage = Get-Value $db "SELECT ``Value`` FROM ``Property`` WHERE ``Property`` = 'ProductLanguage'"
+    $transformedProductCode = Get-Value $db "SELECT ``Value`` FROM ``Property`` WHERE ``Property`` = 'ProductCode'"
     $appLanguage = Get-Value $db "SELECT ``Value`` FROM ``Property`` WHERE ``Property`` = 'APPLANGUAGE'"
     $names = '{0}/{1}/{2}' -f (Get-CountryName $db 'nl-BE'), (Get-CountryName $db 'cs'), (Get-CountryName $db 'es')
     Release $db
 
     $expectedNames = if ($culture -in $codepage1250) { 'België/Česko/Espana' } else { 'België/Cesko/España' }
+    if ($transformedProductCode -ne $productCode) { throw "Transform $culture changes the product code to $transformedProductCode" }
     if ($productLanguage -ne "$lcid" -or $appLanguage -ne $culture.Split('-')[0] -or $names -cne $expectedNames) {
         throw "Transform $culture is broken: ProductLanguage=$productLanguage APPLANGUAGE=$appLanguage names=$names"
     }
