@@ -271,8 +271,9 @@ is public, starts the website deployment (pushes with `GITHUB_TOKEN` don't
 trigger workflows, a `workflow_dispatch` does). The links therefore only
 switch once the new installers exist. Pull afterwards: main has that commit.
 
-Release by tagging main:
+Release by tagging main with an annotated tag whose message summarizes the
+release for users (always include a message when proposing tag commands):
 
 ```bash
-git pull && git tag v1.0.0 && git push origin v1.0.0
+git pull && git tag -a v1.0.0 -m "Short summary of what's new" && git push origin v1.0.0
 ```
