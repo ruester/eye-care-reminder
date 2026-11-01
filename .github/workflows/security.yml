@@ -19,6 +19,8 @@ concurrency:
 env:
   GITLEAKS_VERSION: "8.30.1"
   GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+  OSV_SCANNER_VERSION: "2.7.0"
+  OSV_SCANNER_SHA256: "160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b"
 
 jobs:
   secrets:
@@ -43,9 +45,34 @@ jobs:
           name: sarif-gitleaks
           path: gitleaks.sarif
 
+  dependencies:
+    name: Vulnerable dependencies (OSV-Scanner, OSV database)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install OSV-Scanner
+        run: |
+          curl -sSfLo osv-scanner "https://github.com/google/osv-scanner/releases/download/v${OSV_SCANNER_VERSION}/osv-scanner_linux_amd64"
+          echo "$OSV_SCANNER_SHA256  osv-scanner" | sha256sum -c -
+          chmod +x osv-scanner
+      - name: Scan the lock files (NuGet packages.lock.json, ...)
+        # Exit code 1 means vulnerabilities were found (reported as issues); more is an error.
+        run: |
+          status=0
+          ./osv-scanner scan source --recursive --format sarif --output-file osv-scanner.sarif . || status=$?
+          [ "$status" -le 1 ]
+      - name: Check the build tools (WiX Toolset and extensions)
+        run: python3 .github/scripts/osv_tools.py .github/workflows/build.yml osv-build-tools.sarif
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sarif-dependencies
+          path: "*.sarif"
+
   report:
     name: Create issues for the findings
-    needs: [secrets]
+    needs: [secrets, dependencies]
     # Report what the scanners that worked found, even if another one failed.
     if: always()
     runs-on: ubuntu-latest

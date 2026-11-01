@@ -7,6 +7,9 @@
     <LangVersion>latest</LangVersion>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <!-- packages.lock.json pins all (also transitive) packages for the security scan
+         (OSV-Scanner) and Dependabot. -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 
   <ItemGroup>
