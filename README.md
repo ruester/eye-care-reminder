@@ -9,7 +9,7 @@ Eye Care Reminder is a lightweight desktop application for Windows and Linux tha
 
 The app is available in English, German, French, Italian, Spanish, Portuguese, Dutch, Norwegian, Swedish, Finnish, Czech, Polish and Croatian. It starts in the language of your system (Windows display language, or the locale on Linux); the settings dialog and the Windows installer have a language switcher.
 
-**Downloads:** [Windows installer (.msi)](https://github.com/ruester/eye-care-reminder/releases/download/v1.1.0/eye-care-reminder-1.1.0-windows-x64.msi) · [Linux installer (.bin)](https://github.com/ruester/eye-care-reminder/releases/download/v1.1.0/eye-care-reminder-1.1.0-linux.bin) · [all releases](https://github.com/ruester/eye-care-reminder/releases)
+**Downloads:** [Windows installer (.msi)](https://github.com/ruester/eye-care-reminder/releases/download/v1.2.0/eye-care-reminder-1.2.0-windows-x64.msi) · [Linux installer (.bin)](https://github.com/ruester/eye-care-reminder/releases/download/v1.2.0/eye-care-reminder-1.2.0-linux.bin) · [all releases](https://github.com/ruester/eye-care-reminder/releases)
 
 ## Installation
 
@@ -24,14 +24,14 @@ The Linux app is made for **Xfce**. It also runs on other desktops (GNOME, KDE P
 Download the `.bin`, make it executable and run it in a terminal (no `sudo` needed):
 
 ```bash
-chmod +x eye-care-reminder-1.1.0-linux.bin
+chmod +x eye-care-reminder-1.2.0-linux.bin
 ```
 
 ```bash
-./eye-care-reminder-1.1.0-linux.bin
+./eye-care-reminder-1.2.0-linux.bin
 ```
 
-(Without `chmod`, `sh eye-care-reminder-1.1.0-linux.bin` works too.) The installer
+(Without `chmod`, `sh eye-care-reminder-1.2.0-linux.bin` works too.) The installer
 
 - first checks the system: Linux, desktop (Xfce is supported; others work with limitations, it asks before installing there), display server, Python 3.8+ and the GTK 3 dependencies. `--check` runs only this check,
 - installs the app for your user to `~/.local/share/eye-care-reminder`, with an application menu entry and an autostart entry, and starts it,
