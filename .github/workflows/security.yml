@@ -1,0 +1,73 @@
+name: Security scan
+
+# Weekly scan of the code, the dependencies and the workflows for security issues.
+# Each scanner writes SARIF; the report job turns the findings into GitHub issues
+# with the label "security" (see .github/scripts/security_issues.py).
+on:
+  schedule:
+    # Fridays 05:00 UTC = 06:00 in Germany in winter (07:00 in summer: cron is UTC only).
+    - cron: "0 5 * * 5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-scan
+  cancel-in-progress: false
+
+env:
+  GITLEAKS_VERSION: "8.30.1"
+  GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+
+jobs:
+  secrets:
+    name: Secrets in the git history (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install gitleaks
+        run: |
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfLO "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/$archive"
+          echo "$GITLEAKS_SHA256  $archive" | sha256sum -c -
+          tar xzf "$archive" gitleaks
+      - name: Scan
+        # --redact: the issues must not repeat a leaked secret.
+        run: ./gitleaks git --redact --no-banner --report-format sarif --report-path gitleaks.sarif --exit-code 0 .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sarif-gitleaks
+          path: gitleaks.sarif
+
+  report:
+    name: Create issues for the findings
+    needs: [secrets]
+    # Report what the scanners that worked found, even if another one failed.
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: sarif-*
+          path: sarif
+      - name: Test the reporter
+        run: python3 -m unittest discover -s .github/scripts
+      - name: Create, reopen and close issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/security_issues.py sarif
+      - name: Fail if a scanner failed
+        if: contains(needs.*.result, 'failure')
+        run: |
+          echo "::error::A scanner failed, its findings are missing (see the jobs above)."
+          exit 1
