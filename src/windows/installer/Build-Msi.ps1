@@ -48,6 +48,7 @@ foreach ($culture in $cultures.Keys) {
 
 # --- 2. Language transforms against the en-US base ---
 $base = Join-Path $work 'en-US.msi'
+# LCID (as string: an [ordered] dictionary indexed with an int returns the n-th entry) -> .mst
 $transforms = [ordered]@{}
 foreach ($culture in $cultures.Keys) {
     if ($culture -eq 'en-US') { continue }
@@ -55,10 +56,10 @@ foreach ($culture in $cultures.Keys) {
     Invoke-Native "wix msi transform ($culture)" {
         wix msi transform -t language -o $mst $base (Join-Path $work "$culture.msi")
     }
-    $transforms[$cultures[$culture]] = $mst
+    $transforms["$($cultures[$culture])"] = $mst
 }
 foreach ($lcid in $aliases.Keys) {
-    $transforms[$lcid] = $transforms[$cultures[$aliases[$lcid]]]
+    $transforms["$lcid"] = $transforms["$($cultures[$aliases[$lcid]])"]
 }
 
 # --- 3. Embed the transforms into a copy of the base MSI ---
@@ -88,7 +89,7 @@ Invoke-Com $view Close InvokeMethod | Out-Null
 $summary = Invoke-Com $database SummaryInformation GetProperty @(1)
 $template = Invoke-Com $summary Property GetProperty @($pidTemplate)   # e.g. "x64;1033"
 $platform = $template.Split(';')[0]
-$languages = @(1033) + @($transforms.Keys)
+$languages = @('1033') + @($transforms.Keys)
 Invoke-Com $summary Property SetProperty @($pidTemplate, "$platform;$($languages -join ',')") | Out-Null
 Invoke-Com $summary Persist InvokeMethod | Out-Null
 Invoke-Com $database Commit InvokeMethod | Out-Null
@@ -112,7 +113,7 @@ foreach ($culture in $cultures.Keys) {
     $copy = Join-Path $work "check-$culture.msi"
     Copy-Item $base $copy -Force
     $db = Invoke-Com $installer OpenDatabase InvokeMethod @($copy, $msiOpenDatabaseModeTransact)
-    Invoke-Com $db ApplyTransform InvokeMethod @($transforms[$lcid], 0) | Out-Null
+    Invoke-Com $db ApplyTransform InvokeMethod @($transforms["$lcid"], 0) | Out-Null
     $productLanguage = Get-Value $db "SELECT ``Value`` FROM ``Property`` WHERE ``Property`` = 'ProductLanguage'"
     $appLanguage = Get-Value $db "SELECT ``Value`` FROM ``Property`` WHERE ``Property`` = 'APPLANGUAGE'"
     $czechia = Get-Value $db "SELECT ``Text`` FROM ``ComboBox`` WHERE ``Property`` = 'APPLANGUAGE' AND ``Value`` = 'cs'"
