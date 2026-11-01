@@ -20,6 +20,9 @@ namespace EyeCareReminder
         private const string AutoHideValueName = "AutoHide";
         private const string AutoHideSecondsValueName = "AutoHideSeconds";
 
+        /// <summary>Language code (REG_SZ, see <see cref="Languages"/>); also written by the installer.</summary>
+        private const string LanguageValueName = "Language";
+
         public static bool Exists()
         {
             using (var key = Registry.CurrentUser.OpenSubKey(KeyPath))
@@ -42,6 +45,23 @@ namespace EyeCareReminder
         {
             SaveDword(AutoHideValueName, enabled ? 1 : 0);
             SaveDword(AutoHideSecondsValueName, seconds);
+        }
+
+        /// <summary>The stored language code, or null (not validated, see <see cref="Languages.FromSetting(string)"/>).</summary>
+        public static string LoadLanguage()
+        {
+            using (var key = Registry.CurrentUser.OpenSubKey(KeyPath))
+            {
+                return key?.GetValue(LanguageValueName) as string;
+            }
+        }
+
+        public static void SaveLanguage(string code)
+        {
+            using (var key = Registry.CurrentUser.CreateSubKey(KeyPath))
+            {
+                key.SetValue(LanguageValueName, code, RegistryValueKind.String);
+            }
         }
 
         private static int LoadDword(string name, int min, int max, int defaultValue)

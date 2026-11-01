@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Installer texts (pl-PL). Every culture file has the same String ids. -->
+<WixLocalization Culture="pl-PL" Codepage="1250" xmlns="http://wixtoolset.org/schemas/v4/wxl">
+  <String Id="Lcid" Value="1045" />
+  <String Id="DefaultAppLanguage" Value="pl" />
+  <String Id="LanguageDlgTitle" Value="Język" />
+  <String Id="LanguageDlgDescription" Value="Wybierz język aplikacji Eye Care Reminder." />
+  <String Id="LanguageDlgLabel" Value="&amp;Język:" />
+  <String Id="LanguageDlgHint" Value="Język można później zmienić w ustawieniach aplikacji Eye Care Reminder." />
+  <String Id="LaunchApp" Value="Uruchom Eye Care Reminder" />
+  <String Id="ShortcutDescription" Value="Przypomina o odpoczynku dla oczu" />
+  <String Id="DowngradeError" Value="Nowsza wersja produktu [ProductName] jest już zainstalowana." />
+  <!-- Language list: native names the code page 1250 can store -->
+  <String Id="NameCzechia" Value="Česko" />
+  <String Id="NameSpain" Value="Espana" />
+</WixLocalization>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Installer texts (fi-FI). Every culture file has the same String ids. -->
+<WixLocalization Culture="fi-FI" Codepage="1252" xmlns="http://wixtoolset.org/schemas/v4/wxl">
+  <String Id="Lcid" Value="1035" />
+  <String Id="DefaultAppLanguage" Value="fi" />
+  <String Id="LanguageDlgTitle" Value="Kieli" />
+  <String Id="LanguageDlgDescription" Value="Valitse Eye Care Reminderin kieli." />
+  <String Id="LanguageDlgLabel" Value="&amp;Kieli:" />
+  <String Id="LanguageDlgHint" Value="Voit vaihtaa kielen myöhemmin Eye Care Reminderin asetuksissa." />
+  <String Id="LaunchApp" Value="Käynnistä Eye Care Reminder" />
+  <String Id="ShortcutDescription" Value="Muistuttaa lepuuttamaan silmiä" />
+  <String Id="DowngradeError" Value="[ProductName] on jo asennettu uudempana versiona." />
+  <!-- Language list: native names the code page 1252 can store -->
+  <String Id="NameCzechia" Value="Cesko" />
+  <String Id="NameSpain" Value="España" />
+</WixLocalization>

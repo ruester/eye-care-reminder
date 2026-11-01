@@ -33,13 +33,12 @@ build-linux:
     chmod +x "{{linux_bin}}"
     echo "Built {{linux_bin}} (version {{version}})"
 
-# Build the Windows tray app and MSI installer (requires the .NET SDK and WiX Toolset, see CLAUDE.md)
+# Build the Windows tray app and the multilingual MSI installer (requires the .NET SDK and WiX Toolset, see CLAUDE.md)
 [windows]
 build-windows:
     if (Test-Path build/windows) { Remove-Item -Recurse -Force build/windows }
     dotnet publish src/windows/app/EyeCareReminder.csproj -c Release -o build/windows/payload -p:Version={{version}}
-    wix build src/windows/installer/Package.wxs -arch x64 -ext WixToolset.Util.wixext -ext WixToolset.UI.wixext -d Version={{version}} -bindpath payload=build/windows/payload -o {{windows_msi}}
-    Write-Host "Built {{windows_msi}} (version {{version}})"
+    ./src/windows/installer/Build-Msi.ps1 -Version {{version}} -PayloadDir build/windows/payload -Output {{windows_msi}}
 
 # Run the Windows unit tests with line coverage (report in build/test-results)
 [windows]

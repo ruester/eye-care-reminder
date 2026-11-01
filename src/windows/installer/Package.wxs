@@ -5,7 +5,13 @@
 
   Installs to Program Files\Eye Care Reminder, adds a Start menu shortcut and
   starts the tray app for every user at logon. The setup wizard (WixUI_InstallDir
-  without the license page) ends with a "Completed" page that can launch the app.
+  without the license page, plus a page to choose the app language) ends with a
+  "Completed" page that can launch the app.
+
+  Localization: Build-Msi.ps1 builds this file once per culture with
+  l10n/<culture>.wxl (!(loc.*) strings) and embeds the differences as language
+  transforms into the en-US MSI; Windows Installer applies the one matching the
+  Windows display language automatically.
 -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui"
@@ -13,6 +19,7 @@
   <Package Name="Eye Care Reminder"
            Manufacturer="Eye Care Reminder"
            Version="$(var.Version)"
+           Language="!(loc.Lcid)"
            UpgradeCode="5b0d7c1e-3f4a-4e8b-9c2d-6a1f0e7b3d54"
            Scope="perMachine">
     <!--
@@ -21,7 +28,7 @@
       (WiX derives them from the install paths).
     -->
     <MajorUpgrade Schedule="afterInstallExecute"
-                  DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+                  DowngradeErrorMessage="!(loc.DowngradeError)" />
 
     <!-- The tray app is closed by CloseTrayApp below; skip the "files in use" prompt. -->
     <Property Id="MSIRESTARTMANAGERCONTROL" Value="Disable" />
@@ -40,7 +47,7 @@
           <Shortcut Id="StartMenuShortcut"
                     Directory="ProgramMenuFolder"
                     Name="Eye Care Reminder"
-                    Description="Reminds you to rest your eyes"
+                    Description="!(loc.ShortcutDescription)"
                     WorkingDirectory="INSTALLFOLDER" />
         </File>
         <!-- Start with Windows for every user (silently, in the tray). -->
@@ -53,7 +60,36 @@
       <Component>
         <File Source="!(bindpath.payload)\EyeCareReminder.exe.config" />
       </Component>
+      <!-- App language of the installing user, read by the app (Settings.cs). -->
+      <Component Id="LanguageSetting" Guid="8f3e2a61-4c7d-4b9e-a0f5-2d6c1b8e7a93">
+        <RegistryValue Root="HKCU"
+                       Key="Software\EyeCareReminder"
+                       Name="Language"
+                       Type="string"
+                       Value="[APPLANGUAGE]"
+                       KeyPath="yes" />
+      </Component>
     </ComponentGroup>
+
+    <!--
+      App language (codes as in src/windows/app/Language.cs). Default: the language of
+      the applied language transform (= Windows display language), Belgian if the
+      regional format is Belgian, or the language chosen at a previous installation.
+      Silent installs can pass APPLANGUAGE=<code>.
+    -->
+    <Property Id="APPLANGUAGE" Value="!(loc.DefaultAppLanguage)" Secure="yes" />
+    <Property Id="PREVIOUSAPPLANGUAGE">
+      <RegistrySearch Id="PreviousAppLanguage" Root="HKCU" Key="Software\EyeCareReminder"
+                      Name="Language" Type="raw" />
+    </Property>
+    <SetProperty Action="SetAppLanguagePrevious" Id="APPLANGUAGE" Value="[PREVIOUSAPPLANGUAGE]"
+                 After="AppSearch" Sequence="first" Condition="PREVIOUSAPPLANGUAGE" />
+    <SetProperty Action="SetAppLanguageBelgianDutch" Id="APPLANGUAGE" Value="nl-BE"
+                 After="SetAppLanguagePrevious" Sequence="first"
+                 Condition="NOT PREVIOUSAPPLANGUAGE AND APPLANGUAGE = &quot;nl&quot; AND UserLanguageID = 2067" />
+    <SetProperty Action="SetAppLanguageBelgianFrench" Id="APPLANGUAGE" Value="fr-BE"
+                 After="SetAppLanguageBelgianDutch" Sequence="first"
+                 Condition="NOT PREVIOUSAPPLANGUAGE AND APPLANGUAGE = &quot;fr&quot; AND UserLanguageID = 2060" />
 
     <Feature Id="Main">
       <ComponentGroupRef Id="AppFiles" />
@@ -79,17 +115,55 @@
       <Custom Action="CloseTrayApp" After="InstallInitialize" />
     </InstallExecuteSequence>
 
-    <!-- Setup wizard: Welcome -> install folder -> Install -> Completed (no license page). -->
+    <!-- Setup wizard: Welcome -> app language -> install folder -> Install -> Completed (no license page). -->
     <UI>
       <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
-      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Order="99" />
-      <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="99" />
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="LanguageDlg" Order="99" />
+      <Publish Dialog="LanguageDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" />
+      <Publish Dialog="LanguageDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" />
+      <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="LanguageDlg" Order="99" />
+
+      <!-- Same layout as the WixUI pages. List order and codes as in src/windows/app/Language.cs. -->
+      <Dialog Id="LanguageDlg" Width="370" Height="270" Title="!(loc.InstallDirDlg_Title)">
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)" />
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)" />
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
+          <Publish Event="SpawnDialog" Value="CancelDlg" />
+        </Control>
+        <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44" TabSkip="no" Text="!(loc.InstallDirDlgBannerBitmap)" />
+        <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Title}!(loc.LanguageDlgTitle)" />
+        <Control Id="Description" Type="Text" X="25" Y="23" Width="280" Height="15" Transparent="yes" NoPrefix="yes" Text="!(loc.LanguageDlgDescription)" />
+        <Control Id="LanguageLabel" Type="Text" X="20" Y="60" Width="330" Height="15" Text="!(loc.LanguageDlgLabel)" />
+        <Control Id="LanguageCombo" Type="ComboBox" X="20" Y="76" Width="160" Height="16" Property="APPLANGUAGE" ComboList="yes" Sorted="no">
+          <ComboBox Property="APPLANGUAGE">
+            <ListItem Value="fr-BE" Text="Belgique" />
+            <ListItem Value="nl-BE" Text="België" />
+            <ListItem Value="cs" Text="!(loc.NameCzechia)" />
+            <ListItem Value="de" Text="Deutschland" />
+            <ListItem Value="en" Text="English" />
+            <ListItem Value="es" Text="!(loc.NameSpain)" />
+            <ListItem Value="fr" Text="France" />
+            <ListItem Value="hr" Text="Hrvatska" />
+            <ListItem Value="it" Text="Italia" />
+            <ListItem Value="nl" Text="Nederland" />
+            <ListItem Value="nb" Text="Norge" />
+            <ListItem Value="pl" Text="Polska" />
+            <ListItem Value="pt" Text="Portugal" />
+            <ListItem Value="fi" Text="Suomi" />
+            <ListItem Value="sv" Text="Sverige" />
+          </ComboBox>
+        </Control>
+        <Control Id="Hint" Type="Text" X="20" Y="104" Width="330" Height="30" NoPrefix="yes" Text="!(loc.LanguageDlgHint)" />
+      </Dialog>
+
       <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="LaunchApplication"
                Condition="WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 AND NOT Installed" />
     </UI>
 
     <!-- "Launch Eye Care Reminder" checkbox on the Completed page (checked by default). -->
-    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch Eye Care Reminder" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="!(loc.LaunchApp)" />
     <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1" />
     <Property Id="WixShellExecTarget" Value="[#AppExe]" />
     <CustomAction Id="LaunchApplication"

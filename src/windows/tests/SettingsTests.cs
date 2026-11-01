@@ -31,6 +31,24 @@ namespace EyeCareReminder.Tests
             Assert.Equal(60, Settings.LoadIntervalMinutes());
             Assert.True(Settings.LoadAutoHide());
             Assert.Equal(60, Settings.LoadAutoHideSeconds());
+            Assert.Null(Settings.LoadLanguage());
+        }
+
+        [Fact]
+        public void LanguageRoundTrip()
+        {
+            Settings.SaveLanguage("nl-BE");
+
+            Assert.Equal("nl-BE", Settings.LoadLanguage());
+            Assert.False(Settings.Exists()); // the installer writes the language before the first start
+        }
+
+        [Fact]
+        public void LanguageOfTheWrongTypeIsIgnored()
+        {
+            SetValue("Language", 1, RegistryValueKind.DWord);
+
+            Assert.Null(Settings.LoadLanguage());
         }
 
         [Fact]

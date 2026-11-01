@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Installer texts (sv-SE). Every culture file has the same String ids. -->
+<WixLocalization Culture="sv-SE" Codepage="1252" xmlns="http://wixtoolset.org/schemas/v4/wxl">
+  <String Id="Lcid" Value="1053" />
+  <String Id="DefaultAppLanguage" Value="sv" />
+  <String Id="LanguageDlgTitle" Value="Språk" />
+  <String Id="LanguageDlgDescription" Value="Välj språk för Eye Care Reminder." />
+  <String Id="LanguageDlgLabel" Value="&amp;Språk:" />
+  <String Id="LanguageDlgHint" Value="Du kan ändra språket senare i inställningarna för Eye Care Reminder." />
+  <String Id="LaunchApp" Value="Starta Eye Care Reminder" />
+  <String Id="ShortcutDescription" Value="Påminner dig om att vila ögonen" />
+  <String Id="DowngradeError" Value="En nyare version av [ProductName] är redan installerad." />
+  <!-- Language list: native names the code page 1252 can store -->
+  <String Id="NameCzechia" Value="Cesko" />
+  <String Id="NameSpain" Value="España" />
+</WixLocalization>
