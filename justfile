@@ -63,7 +63,7 @@ bump-version new_version:
     old_re="${old//./\\.}"
     sed -i.bak -E "s/^release_version := \"$old_re\"/release_version := \"$new\"/" justfile
     for file in README.md site/index.html; do
-        sed -i.bak -E -e "s#/download/v$old_re/#/download/v$new/#g" -e "s/eye-care-reminder-$old_re-/eye-care-reminder-$new-/g" -e "s/([Vv]ersion )$old_re/\\1$new/g" "$file"
+        sed -i.bak -E -e "s#/download/v$old_re/#/download/v$new/#g" -e "s/eye-care-reminder-$old_re-/eye-care-reminder-$new-/g" -e "s/([Vv]ersion )$old_re/\\1$new/g" -e "s/(data-version=\")$old_re\"/\\1$new\"/g" "$file"
     done
     rm -f justfile.bak README.md.bak site/index.html.bak
     echo "Release version $old -> $new"

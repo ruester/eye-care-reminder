@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-version="1.0.1">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Eye Care Reminder – regular breaks for your eyes</title>
-  <meta name="description" content="Eye Care Reminder is a lightweight desktop app for Windows and Linux that reminds you to rest your eyes at an interval you choose.">
+  <title data-i18n="title">Eye Care Reminder – regular breaks for your eyes</title>
+  <meta name="description" data-i18n-content="description" content="Eye Care Reminder is a lightweight desktop app for Windows and Linux that reminds you to rest your eyes at an interval you choose.">
   <meta name="theme-color" content="#00897B">
   <meta property="og:title" content="Eye Care Reminder">
   <meta property="og:description" content="A lightweight desktop app that reminds you to rest your eyes at an interval you choose.">
@@ -13,6 +13,7 @@
   <link rel="icon" href="favicon.png" type="image/png" sizes="32x32">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
+  <script src="i18n.js" defer></script>
 </head>
 <body>
   <header class="site-header">
@@ -21,12 +22,19 @@
         <img src="logo.svg" alt="" width="32" height="32">
         <span>Eye Care Reminder</span>
       </a>
-      <nav class="nav" aria-label="Main">
-        <a href="#features">Features</a>
-        <a href="#download">Download</a>
-        <a href="#faq">FAQ</a>
-        <a href="https://github.com/ruester/eye-care-reminder">GitHub</a>
-      </nav>
+      <div class="header-right">
+        <nav class="nav" aria-label="Main">
+          <a href="#features" data-i18n="navFeatures">Features</a>
+          <a href="#download" data-i18n="navDownload">Download</a>
+          <a href="#faq" data-i18n="navFaq">FAQ</a>
+          <a href="https://github.com/ruester/eye-care-reminder">GitHub</a>
+        </nav>
+        <!-- Language switcher, filled by i18n.js (hidden without JavaScript). -->
+        <div class="lang-switcher" hidden>
+          <button type="button" class="lang-button" aria-haspopup="listbox" aria-expanded="false" data-i18n-aria-label="languageLabel" aria-label="Language"></button>
+          <ul class="lang-menu" role="listbox" hidden></ul>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -34,9 +42,9 @@
     <section class="hero">
       <div class="container hero-inner">
         <div class="hero-text">
-          <p class="eyebrow">For everyone who works at a screen</p>
-          <h1>Give your eyes a&nbsp;break.</h1>
-          <p class="lead">
+          <p class="eyebrow" data-i18n="eyebrow">For everyone who works at a screen</p>
+          <h1 data-i18n="heroTitle">Give your eyes a&nbsp;break.</h1>
+          <p class="lead" data-i18n="heroLead">
             Eye Care Reminder is a lightweight desktop app that reminds you to rest your eyes
             at an interval you choose, so long screen sessions don't end with tired, dry or
             strained eyes.
@@ -44,11 +52,11 @@
           <div class="actions">
             <a class="button primary" href="https://github.com/ruester/eye-care-reminder/releases/download/v1.0.1/eye-care-reminder-1.0.1-windows-x64.msi">
               <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 5.5 10 4.5v7H3zM11 4.3 21 3v8.5H11zM3 12.5h7v7l-7-1zM11 12.5h10V21l-10-1.4z"/></svg>
-              Download for Windows
+              <span data-i18n="downloadWindows">Download for Windows</span>
             </a>
-            <a class="button secondary" href="#linux">Linux: coming soon</a>
+            <a class="button secondary" href="#linux" data-i18n="linuxSoon">Linux: coming soon</a>
           </div>
-          <p class="fineprint">
+          <p class="fineprint" data-i18n="heroFineprint">
             Free and open source · Windows 10 (1903 or later) and Windows 11 · Version 1.0.1
           </p>
         </div>
@@ -63,8 +71,8 @@
             <div class="toast">
               <img src="logo.svg" alt="" width="48" height="48">
               <div class="toast-text">
-                <strong>Time for an eye break</strong>
-                <span>Look at something at least 6 metres (20 feet) away for 20 seconds and blink a few times.</span>
+                <strong data-i18n="toastTitle">Time for an eye break</strong>
+                <span data-i18n="toastMessage">Look at something at least 6 metres (20 feet) away for 20 seconds and blink a few times.</span>
               </div>
               <span class="toast-close">✕</span>
               <div class="toast-countdown"><div></div></div>
@@ -76,38 +84,38 @@
 
     <section id="features" class="section">
       <div class="container">
-        <h2>Small app, healthy habit</h2>
-        <p class="section-lead">It sits quietly in the notification area and only speaks up when it's time for a break.</p>
+        <h2 data-i18n="featuresTitle">Small app, healthy habit</h2>
+        <p class="section-lead" data-i18n="featuresLead">It sits quietly in the notification area and only speaks up when it's time for a break.</p>
         <div class="features">
           <article class="feature">
             <div class="feature-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg></div>
-            <h3>Your rhythm</h3>
-            <p>Choose any interval from 1 minute to 24 hours. By default you're reminded once an hour.</p>
+            <h3 data-i18n="f1Title">Your rhythm</h3>
+            <p data-i18n="f1Text">Choose any interval from 1 minute to 24 hours. By default you're reminded once an hour.</p>
           </article>
           <article class="feature">
             <div class="feature-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><rect x="11" y="11" width="8" height="4" rx="1"/></svg></div>
-            <h3>Reminders you'll actually see</h3>
-            <p>A clear popup in the bottom-right corner that doesn't steal focus from what you're working on, even with Do Not Disturb on.</p>
+            <h3 data-i18n="f2Title">Reminders you'll actually see</h3>
+            <p data-i18n="f2Text">A clear popup in the bottom-right corner that doesn't steal focus from what you're working on, even with Do Not Disturb on.</p>
           </article>
           <article class="feature">
             <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M4 18h16"/><path d="M4 18h9" stroke-width="4"/><circle cx="12" cy="9" r="4"/></svg></div>
-            <h3>Hides by itself</h3>
-            <p>A countdown bar shows when the reminder disappears. Pick 1 second to 5 minutes, or keep it until you click it.</p>
+            <h3 data-i18n="f3Title">Hides by itself</h3>
+            <p data-i18n="f3Text">A countdown bar shows when the reminder disappears. Pick 1 second to 5 minutes, or keep it until you click it.</p>
           </article>
           <article class="feature">
             <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 0 2-5"/><path d="M5 3v4h4"/></svg></div>
-            <h3>Break when it suits you</h3>
-            <p>"Take a break now" starts a break right away, and the next reminder is timed from that moment.</p>
+            <h3 data-i18n="f4Title">Break when it suits you</h3>
+            <p data-i18n="f4Text">"Take a break now" starts a break right away and the next reminder is timed from then. Locking your PC counts as a break, too.</p>
           </article>
           <article class="feature">
-            <div class="feature-icon"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
-            <h3>Locking counts as a break</h3>
-            <p>Away from your desk? When you unlock your PC, the interval starts over.</p>
+            <div class="feature-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></div>
+            <h3 data-i18n="f5Title">Speaks your language</h3>
+            <p data-i18n="f5Text">Available in 13 languages and set to your Windows language automatically. You can switch at any time in the settings.</p>
           </article>
           <article class="feature">
             <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></div>
-            <h3>Light and private</h3>
-            <p>Starts with Windows, needs no extra runtime, no account and no internet connection. No data is collected.</p>
+            <h3 data-i18n="f6Title">Light and private</h3>
+            <p data-i18n="f6Text">Starts with Windows, needs no extra runtime, no account and no internet connection. No data is collected.</p>
           </article>
         </div>
       </div>
@@ -115,22 +123,22 @@
 
     <section class="section tinted">
       <div class="container">
-        <h2>How it works</h2>
+        <h2 data-i18n="howTitle">How it works</h2>
         <ol class="steps">
           <li>
             <span class="step-number">1</span>
-            <h3>Install</h3>
-            <p>Run the installer. Eye Care Reminder starts right away and from then on with Windows.</p>
+            <h3 data-i18n="s1Title">Install</h3>
+            <p data-i18n="s1Text">Run the installer. Eye Care Reminder starts right away and from then on with Windows.</p>
           </li>
           <li>
             <span class="step-number">2</span>
-            <h3>Set your interval</h3>
-            <p>Click the eye icon in the notification area to choose how often you want to be reminded.</p>
+            <h3 data-i18n="s2Title">Set your interval</h3>
+            <p data-i18n="s2Text">Click the eye icon in the notification area to choose how often you want to be reminded.</p>
           </li>
           <li>
             <span class="step-number">3</span>
-            <h3>Look away</h3>
-            <p>When the reminder appears, look at something far away for 20 seconds and blink a few times.</p>
+            <h3 data-i18n="s3Title">Look away</h3>
+            <p data-i18n="s3Text">When the reminder appears, look at something far away for 20 seconds and blink a few times.</p>
           </li>
         </ol>
       </div>
@@ -138,24 +146,24 @@
 
     <section id="download" class="section">
       <div class="container">
-        <h2>Download</h2>
+        <h2 data-i18n="downloadTitle">Download</h2>
         <div class="downloads">
           <article class="download-card">
             <h3>Windows</h3>
-            <p>Windows 10 (version 1903 or later) and Windows 11, 64-bit.</p>
-            <a class="button primary" href="https://github.com/ruester/eye-care-reminder/releases/download/v1.0.1/eye-care-reminder-1.0.1-windows-x64.msi">
+            <p data-i18n="windowsRequirements">Windows 10 (version 1903 or later) and Windows 11, 64-bit.</p>
+            <a class="button primary" href="https://github.com/ruester/eye-care-reminder/releases/download/v1.0.1/eye-care-reminder-1.0.1-windows-x64.msi" data-i18n="downloadMsi">
               Download installer (.msi)
             </a>
-            <p class="fineprint">Version 1.0.1. Upgrades replace the installed version automatically.</p>
+            <p class="fineprint" data-i18n="windowsFineprint">Version 1.0.1. Upgrades replace the installed version automatically.</p>
           </article>
           <article id="linux" class="download-card muted">
-            <h3>Linux <span class="badge">In development</span></h3>
-            <p>Planned for Xfce, Unity and every desktop with standard (freedesktop.org) notifications.</p>
-            <a class="button secondary" href="https://github.com/ruester/eye-care-reminder">Follow on GitHub</a>
-            <p class="fineprint">The Linux app is not available yet.</p>
+            <h3>Linux <span class="badge" data-i18n="inDevelopment">In development</span></h3>
+            <p data-i18n="linuxPlanned">Planned for Xfce, Unity and every desktop with standard (freedesktop.org) notifications.</p>
+            <a class="button secondary" href="https://github.com/ruester/eye-care-reminder" data-i18n="followGithub">Follow on GitHub</a>
+            <p class="fineprint" data-i18n="linuxFineprint">The Linux app is not available yet.</p>
           </article>
         </div>
-        <p class="all-releases">
+        <p class="all-releases" data-i18n="allReleases">
           Older versions and release notes are on the <a href="https://github.com/ruester/eye-care-reminder/releases">releases page</a>.
         </p>
       </div>
@@ -163,10 +171,10 @@
 
     <section id="faq" class="section tinted">
       <div class="container narrow">
-        <h2>Frequently asked questions</h2>
+        <h2 data-i18n="faqTitle">Frequently asked questions</h2>
         <details>
-          <summary>Windows shows "Windows protected your PC". Is that safe?</summary>
-          <p>
+          <summary data-i18n="q1">Windows shows "Windows protected your PC". Is that safe?</summary>
+          <p data-i18n="a1">
             The installer isn't signed with a paid code-signing certificate, so Microsoft
             Defender SmartScreen warns about it when it's new. Click <em>More info</em> and then
             <em>Run anyway</em> to install. The installer is built from the public source code
@@ -174,23 +182,23 @@
           </p>
         </details>
         <details>
-          <summary>How do I change the interval or the auto-hide time?</summary>
-          <p>
+          <summary data-i18n="q2">How do I change the interval, the auto-hide time or the language?</summary>
+          <p data-i18n="a2">
             Click the eye icon in the notification area (on Windows 11 it may be behind the
             <em>^</em> arrow) or open Eye Care Reminder from the Start menu. "Test notification"
             shows you a reminder with your settings.
           </p>
         </details>
         <details>
-          <summary>Does it still remind me when Do Not Disturb is on?</summary>
-          <p>
+          <summary data-i18n="q3">Does it still remind me when Do Not Disturb is on?</summary>
+          <p data-i18n="a3">
             Yes. Eye Care Reminder draws its own reminder instead of using Windows notifications,
             which Windows hides while Do Not Disturb or Focus is on.
           </p>
         </details>
         <details>
-          <summary>How do I update or uninstall it?</summary>
-          <p>
+          <summary data-i18n="q4">How do I update or uninstall it?</summary>
+          <p data-i18n="a4">
             To update, run the newer installer: it replaces the installed version and keeps your
             settings. To uninstall, go to <em>Settings → Apps → Installed apps</em> and remove
             Eye Care Reminder.
@@ -203,7 +211,7 @@
   <footer class="site-footer">
     <div class="container footer-inner">
       <span class="brand small"><img src="logo.svg" alt="" width="20" height="20"> Eye Care Reminder</span>
-      <span>
+      <span data-i18n="footer">
         Free and open source under the <a href="https://github.com/ruester/eye-care-reminder/blob/main/LICENSE">MIT License</a>
         · <a href="https://github.com/ruester/eye-care-reminder">Source code on GitHub</a>
       </span>
