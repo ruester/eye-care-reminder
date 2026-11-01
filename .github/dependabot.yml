@@ -1,0 +1,34 @@
+# Dependabot opens pull requests for new versions of the dependencies (the CI tests
+# them like any other change). Security updates (pull requests for Dependabot alerts)
+# use the same settings; enable "Dependabot alerts" and "Dependabot security updates"
+# under Settings -> Advanced Security. The weekly security scan
+# (.github/workflows/security.yml) covers what Dependabot can't see (WiX tools, code).
+version: 2
+updates:
+  # Actions are pinned to commit hashes with the version in a comment: Dependabot
+  # updates both.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: friday
+      time: "06:00"
+      timezone: Europe/Berlin
+    labels: [dependencies]
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # Test packages of the Windows unit tests (the app itself has no packages);
+  # packages.lock.json is updated too.
+  - package-ecosystem: nuget
+    directory: /src/windows/tests
+    schedule:
+      interval: weekly
+      day: friday
+      time: "06:00"
+      timezone: Europe/Berlin
+    labels: [dependencies]
+    groups:
+      test-packages:
+        patterns: ["*"]
