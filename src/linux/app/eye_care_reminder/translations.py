@@ -73,7 +73,7 @@ ENGLISH = Texts(
     save="Save",
     cancel="Cancel",
     break_title="Time for an eye break",
-    break_message="20-20-20 rule: look at something at least 6 metres (20 feet) away for 20 seconds and blink a few times.",
+    break_message="20-20-20 rule: look at something at least 6 meters (20 feet) away for 20 seconds and blink a few times.",
     running_title="Eye Care Reminder is running",
     running_message="Your next eye break is at {0}. Click the eye icon in the notification area to change the interval.",
 )

@@ -4,7 +4,7 @@ using System.Drawing.Drawing2D;
 
 namespace EyeCareReminder
 {
-    /// <summary>Draws a <see cref="Flag"/> into a rectangle (with a thin grey outline).</summary>
+    /// <summary>Draws a <see cref="Flag"/> into a rectangle (with a thin gray outline).</summary>
     internal static class FlagPainter
     {
         private static readonly Color OutlineColor = Color.FromArgb(160, 160, 160);

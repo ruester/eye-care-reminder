@@ -85,7 +85,7 @@ def _fill_cross(cr, color, x, y, w, h, left, right, top, bottom):
 
 
 def paint_flag(cr, x, y, w, h, flag):
-    """Draws flag into the rectangle, with a thin grey outline."""
+    """Draws flag into the rectangle, with a thin gray outline."""
     cr.save()
     cr.rectangle(x, y, w, h)
     cr.clip()

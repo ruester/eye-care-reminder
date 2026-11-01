@@ -28,7 +28,7 @@ namespace EyeCareReminder
             Save = "Save",
             Cancel = "Cancel",
             BreakTitle = "Time for an eye break",
-            BreakMessage = "20-20-20 rule: look at something at least 6 metres (20 feet) away for 20 seconds and blink a few times.",
+            BreakMessage = "20-20-20 rule: look at something at least 6 meters (20 feet) away for 20 seconds and blink a few times.",
             RunningTitle = "Eye Care Reminder is running",
             RunningMessage = "Your next eye break is at {0}. Click the eye icon in the notification area to change the interval.",
         };

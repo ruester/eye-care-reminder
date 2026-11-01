@@ -11,6 +11,11 @@ that periodically (user-defined interval) reminds the user to rest their eyes.
 
 Work directly on `main`: commit and push there. Do not create feature branches.
 
+## Language of English texts
+
+Use **US English** everywhere: app and installer texts, website, README, docs, code
+comments and commit messages (color, center, gray, canceled, meters, license, ...).
+
 ## License
 
 MIT (`LICENSE`, copyright holder Matthias Rüster). The README and the website
@@ -257,7 +262,7 @@ suffixes such as `-rc1`.
 
 - `site/` is a static landing page (no build step, no framework):
   `index.html`, `style.css`, `logo.svg` (vector copy of the app
-  icon) and PNG icons. Its colours match the Windows app (`#00897B` accent,
+  icon) and PNG icons. Its colors match the Windows app (`#00897B` accent,
   `#26A69A`, `#D6ECE9` countdown track, `#142128`); it supports dark mode.
 - Languages: English (in the HTML itself), Spanish, French, Italian and German
   in `i18n.js` (elements with `data-i18n` keys; `{version}` = `<html data-version>`).

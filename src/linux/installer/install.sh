@@ -470,7 +470,7 @@ if [ "$action" = check ]; then
 fi
 
 if [ "$unsupported_desktop" = yes ] && is_interactive && ! confirm "Install Eye Care Reminder on $desktop anyway?"; then
-    say "Installation cancelled."
+    say "Installation canceled."
     exit 1
 fi
 

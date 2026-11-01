@@ -1,5 +1,5 @@
-/* Colours match the Windows app: AccentColor and CountdownTrackColor in
-   src/windows/app/NotificationPopup.cs and the colours of EyeCareReminder.ico. */
+/* Colors match the Windows app: AccentColor and CountdownTrackColor in
+   src/windows/app/NotificationPopup.cs and the colors of EyeCareReminder.ico. */
 :root {
   --accent: #00897b;
   --accent-light: #26a69a;

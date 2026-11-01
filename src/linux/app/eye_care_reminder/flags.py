@@ -1,5 +1,5 @@
 """Simplified national flags of the language switcher (same as the Windows app's Flag.cs),
-drawn by flag_painter.py: flag emoji need a colour emoji font, which many systems lack."""
+drawn by flag_painter.py: flag emoji need a color emoji font, which many systems lack."""
 
 import enum
 from dataclasses import dataclass
@@ -20,7 +20,7 @@ class Pattern(enum.Enum):
 class Emblem(enum.Enum):
     NONE = 0
     PORTUGAL = 1  # simplified armillary sphere and shield on the green/red border
-    CROATIA = 2  # red and white checkerboard shield in the centre
+    CROATIA = 2  # red and white checkerboard shield in the center
 
 
 @dataclass(frozen=True)

@@ -31,7 +31,7 @@ namespace EyeCareReminder
         /// <summary>Simplified armillary sphere and shield on the green/red border.</summary>
         Portugal,
 
-        /// <summary>Red and white checkerboard shield in the centre.</summary>
+        /// <summary>Red and white checkerboard shield in the center.</summary>
         Croatia,
     }
 

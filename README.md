@@ -5,7 +5,7 @@
 [![Windows unit test coverage](.github/badges/windows-coverage.svg)](https://github.com/ruester/eye-care-reminder/actions/workflows/build.yml)
 [![Linux unit test coverage](.github/badges/linux-coverage.svg)](https://github.com/ruester/eye-care-reminder/actions/workflows/build.yml)
 
-Eye Care Reminder is a lightweight desktop application for Windows and Linux that helps reduce eye strain during long periods of screen work. At a user-defined interval, it displays a desktop notification reminding you to look away from the screen and give your eyes a rest. By default it follows the 20-20-20 rule: every 20 minutes, look at something at least 6 metres (20 feet) away for 20 seconds.
+Eye Care Reminder is a lightweight desktop application for Windows and Linux that helps reduce eye strain during long periods of screen work. At a user-defined interval, it displays a desktop notification reminding you to look away from the screen and give your eyes a rest. By default it follows the 20-20-20 rule: every 20 minutes, look at something at least 6 meters (20 feet) away for 20 seconds.
 
 The app is available in English, German, French, Italian, Spanish, Portuguese, Dutch, Norwegian, Swedish, Finnish, Czech, Polish and Croatian. It starts in the language of your system (Windows display language, or the locale on Linux); the settings dialog and the Windows installer have a language switcher.
 
