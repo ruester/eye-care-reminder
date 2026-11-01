@@ -21,13 +21,14 @@ env:
   GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
   OSV_SCANNER_VERSION: "2.7.0"
   OSV_SCANNER_SHA256: "160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b"
+  ZIZMOR_VERSION: "1.31.1"
 
 jobs:
   secrets:
     name: Secrets in the git history (gitleaks)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -40,7 +41,7 @@ jobs:
       - name: Scan
         # --redact: the issues must not repeat a leaked secret.
         run: ./gitleaks git --redact --no-banner --report-format sarif --report-path gitleaks.sarif --exit-code 0 .
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: sarif-gitleaks
           path: gitleaks.sarif
@@ -49,7 +50,7 @@ jobs:
     name: Vulnerable dependencies (OSV-Scanner, OSV database)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
       - name: Install OSV-Scanner
@@ -65,14 +66,37 @@ jobs:
           [ "$status" -le 1 ]
       - name: Check the build tools (WiX Toolset and extensions)
         run: python3 .github/scripts/osv_tools.py .github/workflows/build.yml osv-build-tools.sarif
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: sarif-dependencies
           path: "*.sarif"
 
+  workflows:
+    name: GitHub Actions workflows (zizmor)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Install zizmor
+        run: pipx install "zizmor==$ZIZMOR_VERSION"
+      - name: Scan
+        # Online audits (e.g. actions with known vulnerabilities) use the token.
+        # Exit codes 10-14 mean findings (reported as issues); 1 and others are errors.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          status=0
+          zizmor --format sarif .github/workflows > zizmor.sarif || status=$?
+          [ "$status" -eq 0 ] || [ "$status" -ge 10 ]
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: sarif-zizmor
+          path: zizmor.sarif
+
   report:
     name: Create issues for the findings
-    needs: [secrets, dependencies]
+    needs: [secrets, dependencies, workflows]
     # Report what the scanners that worked found, even if another one failed.
     if: always()
     runs-on: ubuntu-latest
@@ -80,10 +104,10 @@ jobs:
       contents: read
       issues: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: sarif-*
           path: sarif

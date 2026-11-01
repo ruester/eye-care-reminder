@@ -20,8 +20,12 @@ jobs:
     permissions:
       contents: write # commit the coverage badge to main
     steps:
-      - uses: actions/checkout@v4
-      - uses: extractions/setup-just@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: extractions/setup-just@dd310ad5a97d8e7b41793f8ef055398d51ad4de6 # v2.0.0
+        with:
+          just-version: "1.59.0"
       - name: Install test dependencies
         run: |
           sudo apt-get update -q
@@ -43,7 +47,7 @@ jobs:
         env:
           PYTHON: /usr/bin/python3
         run: just test-linux
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: linux-test-results
@@ -63,7 +67,7 @@ jobs:
           xvfb-run -a dbus-run-session sh src/linux/tests/test-installer.sh \
             build/eye-care-reminder-0.0.0-linux.bin "$new" "$VERSION"
           rm build/eye-care-reminder-0.0.0-linux.bin
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: linux-installer
           path: build/eye-care-reminder-*-linux.bin
@@ -75,8 +79,12 @@ jobs:
     permissions:
       contents: write # commit the coverage badge to main
     steps:
-      - uses: actions/checkout@v4
-      - uses: extractions/setup-just@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: extractions/setup-just@dd310ad5a97d8e7b41793f8ef055398d51ad4de6 # v2.0.0
+        with:
+          just-version: "1.59.0"
       - name: Install WiX Toolset
         run: |
           dotnet tool install --global wix --version 5.0.2
@@ -92,7 +100,7 @@ jobs:
           fi
       - name: Unit tests with coverage
         run: just test-windows
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: windows-test-results
@@ -116,12 +124,12 @@ jobs:
           $old = (Resolve-Path "build/eye-care-reminder-0.0.0-windows-x64.msi").Path
           ./src/windows/installer/Test-Installer.ps1 -OldMsi $old -NewMsi $new -ExpectedVersion $expected
           Remove-Item $old
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: failure()
         with:
           name: installer-test-logs
           path: "*.log"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: windows-installer
           path: build/eye-care-reminder-*-windows-x64.msi
@@ -135,7 +143,10 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # Needed for the tag fetch; this job uploads no artifacts.
+          persist-credentials: true # zizmor: ignore[artipacked]
       - name: Release notes from the tag message
         run: |
           # actions/checkout turns the pushed tag into a lightweight one: fetch the real tag object.
@@ -147,18 +158,18 @@ jobs:
             : > release-notes.md
           fi
           cat release-notes.md
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           path: dist
           merge-multiple: true
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            dist/eye-care-reminder-*-linux.bin
-            dist/eye-care-reminder-*-windows-x64.msi
-          # The tag message, followed by GitHub's generated notes ("Full Changelog" link).
-          body_path: release-notes.md
-          generate_release_notes: true
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # The tag message, followed by GitHub's generated notes ("Full Changelog" link).
+        run: |
+          gh release create "$GITHUB_REF_NAME" --verify-tag --title "$GITHUB_REF_NAME" \
+            --notes-file release-notes.md --generate-notes \
+            dist/eye-care-reminder-*-linux.bin dist/eye-care-reminder-*-windows-x64.msi
 
   update-download-links:
     name: Update download links on main
@@ -169,10 +180,14 @@ jobs:
       contents: write # push to main
       actions: write # start the website deployment
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: main
-      - uses: extractions/setup-just@v2
+          # Needed to push to main; this job uploads no artifacts.
+          persist-credentials: true # zizmor: ignore[artipacked]
+      - uses: extractions/setup-just@dd310ad5a97d8e7b41793f8ef055398d51ad4de6 # v2.0.0
+        with:
+          just-version: "1.59.0"
       - name: Set release_version and the download links to the new release
         run: just bump-version "${GITHUB_REF_NAME#v}"
       - name: Commit and push to main
