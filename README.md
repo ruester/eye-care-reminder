@@ -7,6 +7,8 @@
 
 Eye Care Reminder is a lightweight desktop application for Windows and Linux that helps reduce eye strain during long periods of screen work. At a user-defined interval, it displays a desktop notification reminding you to look away from the screen and give your eyes a rest.
 
+The Windows app and installer are available in English, German, French, Italian, Spanish, Portuguese, Dutch (Netherlands and Belgium), French (Belgium), Norwegian, Swedish, Finnish, Czech, Polish and Croatian. They start in the Windows display language; the installer and the settings dialog have a language switcher.
+
 **Downloads:** [Windows installer (.msi)](https://github.com/ruester/eye-care-reminder/releases/download/v1.0.1/eye-care-reminder-1.0.1-windows-x64.msi) · [Linux installer (.bin)](https://github.com/ruester/eye-care-reminder/releases/download/v1.0.1/eye-care-reminder-1.0.1-linux.bin) · [all releases](https://github.com/ruester/eye-care-reminder/releases)
 
 ## Development
@@ -32,7 +34,7 @@ wix extension add --global WixToolset.Util.wixext/5.0.2
 wix extension add --global WixToolset.UI.wixext/5.0.2
 ```
 
-Build the installer (`build/eye-care-reminder-<version>-windows-x64.msi`):
+Build the installer (`build/eye-care-reminder-<version>-windows-x64.msi`, one MSI with embedded language transforms):
 
 ```powershell
 just build-windows

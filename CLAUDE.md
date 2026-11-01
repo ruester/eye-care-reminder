@@ -27,9 +27,10 @@ src/
     unity/         Unity (Ubuntu) variant
   windows/
     app/           C# WinForms tray app (.NET Framework 4.8, EyeCareReminder.csproj)
-    installer/     Package.wxs (WiX Toolset v5 source for the MSI)
+    installer/     Package.wxs (WiX Toolset v5 source for the MSI), l10n/*.wxl (installer texts),
+                   Build-Msi.ps1 (multilingual MSI build), Test-Installer.ps1
     tests/         xunit unit tests for the app's helpers (EyeCareReminder.Tests.csproj)
-site/              landing page (static HTML/CSS/JS), deployed to GitHub Pages
+site/              landing page (static HTML/CSS/JS, i18n.js translations), deployed to GitHub Pages
 build/             build output; created by the just recipes, not tracked
 justfile           all build recipes
 .github/workflows/build.yml   CI + GitHub release publishing + download link update
@@ -94,10 +95,44 @@ suffixes such as `-rc1`.
   silently in the tray. Any other launch (Start menu, installer's "Launch"
   checkbox) opens the settings dialog so the user sees that the app is running
   (Windows 11 hides new tray icons in the overflow by default).
-- Settings (DWORDs under `HKCU\Software\EyeCareReminder`, see `Settings.cs`):
+- Settings (under `HKCU\Software\EyeCareReminder`, see `Settings.cs`), DWORDs
   `IntervalMinutes` (default 60, range 1-1440), `AutoHide` (0/1, default 1)
-  and `AutoHideSeconds` (default 60, range 1-300). "Test notification" uses
-  the auto-hide values currently entered in the dialog, even if unsaved.
+  and `AutoHideSeconds` (default 60, range 1-300), and the string `Language`
+  (also written by the installer). "Test notification" uses the auto-hide
+  values and the language currently selected in the dialog, even if unsaved.
+
+## Languages (Windows app and installer)
+
+- Supported: English (`en`, no US/GB distinction, UK flag), German `de`,
+  French `fr`, Italian `it`, Spanish `es`, Portuguese `pt`, Dutch `nl`,
+  Norwegian Bokmål `nb`, Swedish `sv`, Finnish `fi`, Czech `cs`, Polish `pl`,
+  Croatian `hr`, plus Belgium as `nl-BE` and `fr-BE` (same texts as nl/fr, Belgian
+  flag). The switcher lists native country names ("Deutschland", "België",
+  "Belgique", ..., "English") with flags.
+- App: `Language.cs` (`Languages.All`, detection, codes), `Translations.cs` (all
+  texts, `Texts.cs` describes them), `Plural.cs` (one/few/other forms for
+  cs/pl/hr), `Flag.cs` + `FlagPainter.cs` (flags drawn with GDI+: Windows has no
+  flag emoji), `LanguageComboBox.cs` (owner-drawn switcher in the settings dialog,
+  which re-translates itself on change). Language: stored `Language` value if
+  valid, else the Windows display language (`CurrentUICulture`; nl/fr become
+  Belgian if the UI or regional format culture is `-BE`; nn/no -> nb), else English.
+- Adding a text: add a property to `Texts` and a value in every language of
+  `Translations` (the unit tests check completeness, placeholders and `&`
+  accelerators). Adding a language: `Translations`, `Languages.All`, `Flags`,
+  the installer's `ComboBox` list in `Package.wxs`, and (for installer texts) a
+  culture in `Build-Msi.ps1` plus `l10n/<culture>.wxl`.
+- Installer: `Build-Msi.ps1` builds `Package.wxs` once per culture (13 cultures,
+  `l10n/<culture>.wxl` + the WixUI translations), creates language transforms
+  (`wix msi transform -t language`) against the en-US MSI, embeds them as
+  substorages named by LCID and lists all LCIDs in the summary Template, then
+  checks each transform. Windows Installer applies the transform of the Windows
+  display language automatically (`TRANSFORMS=:1029` forces one). The wizard
+  language itself can't be switched at runtime (MSI limitation); the extra
+  `LanguageDlg` page (after Welcome) chooses the app language (`APPLANGUAGE`,
+  default: the transform's language, Belgian via `UserLanguageID`, or the
+  previously installed value) and writes it to HKCU. Code pages: 1252, and 1250
+  for cs/pl/hr, so the MSI list shows "Cesko" resp. "Espana" where Č/ñ don't
+  fit the code page (`NameCzechia`/`NameSpain` strings).
 - Single instance via a named mutex; launching the exe again signals the running
   instance (named event) to open the settings dialog.
 - `NotifyIcon.Text` must stay <= 63 characters (throws otherwise on .NET Framework).
@@ -136,10 +171,12 @@ suffixes such as `-rc1`.
   `CloseTrayApp` when scheduled early (error 2613). `MSIRESTARTMANAGERCONTROL=Disable`
   avoids the "files in use" prompt.
 - CI tests this with `src/windows/installer/Test-Installer.ps1`: installs a
-  0.0.0 build, starts the app, upgrades to the current build and uninstalls,
-  each while the app is running (no reboot, no leftovers, one product entry).
+  0.0.0 build with the Czech transform (checks product language 1029 and app
+  language `cs`), starts the app, upgrades to the current build (language must be
+  kept) and uninstalls, each while the app is running (no reboot, no leftovers,
+  one product entry).
   Non-tag CI builds are versioned `0.0.<run number>` so the upgrade is real.
-- Setup wizard: `WixUI_InstallDir` with the license page skipped (no license
+- Setup wizard: `WixUI_InstallDir` plus `LanguageDlg`, with the license page skipped (no license
   yet; drop the two `Order="99"` overrides once a `WixUILicenseRtf` exists).
   The final page has a "Launch Eye Care Reminder" checkbox (`WixShellExec`,
   runs as the non-elevated user). Silent installs (`/qn`) don't launch the app;
@@ -160,6 +197,10 @@ suffixes such as `-rc1`.
   `index.html`, `style.css`, `logo.svg` (vector copy of the app
   icon) and PNG icons. Its colours match the Windows app (`#00897B` accent,
   `#26A69A`, `#D6ECE9` countdown track, `#142128`); it supports dark mode.
+- Languages: English (in the HTML itself), Spanish, French, Italian and German
+  in `i18n.js` (elements with `data-i18n` keys; `{version}` = `<html data-version>`).
+  Selection: `?lang=xx`, else the choice remembered in localStorage, else the
+  browser language. Translate new texts in all four languages there.
 - The download buttons link directly to the `.msi` of `release_version`
   (updated by CI after each release, see Releases). Keep the page truthful: Linux is shown as "in development"
   until the Linux app exists.
