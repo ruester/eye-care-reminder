@@ -22,6 +22,8 @@ env:
   OSV_SCANNER_VERSION: "2.7.0"
   OSV_SCANNER_SHA256: "160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b"
   ZIZMOR_VERSION: "1.31.1"
+  BANDIT_VERSION: "1.9.4"
+  SEMGREP_VERSION: "1.183.0"
 
 jobs:
   secrets:
@@ -94,9 +96,38 @@ jobs:
           name: sarif-zizmor
           path: zizmor.sarif
 
+  code:
+    name: Code (Bandit for Python, Semgrep for C#, shell, JavaScript, ...)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Install Bandit and Semgrep
+        run: |
+          pipx install "bandit[sarif]==$BANDIT_VERSION"
+          pipx install "semgrep==$SEMGREP_VERSION"
+      - name: Bandit (Linux app and CI scripts, medium and high severity)
+        # Exit code 1 means findings (reported as issues).
+        run: |
+          status=0
+          bandit --recursive src/linux/app .github/scripts --exclude '*/test_*.py' \
+            --severity-level medium --format sarif --output bandit.sarif || status=$?
+          [ "$status" -le 1 ]
+      - name: Semgrep (security rules of the Semgrep registry)
+        run: |
+          semgrep scan --config p/security-audit --config p/secrets --config p/csharp \
+            --config p/javascript --config p/bash \
+            --exclude 'test_*.py' --exclude 'src/windows/tests' \
+            --sarif --output semgrep.sarif
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: sarif-code
+          path: "*.sarif"
+
   report:
     name: Create issues for the findings
-    needs: [secrets, dependencies, workflows]
+    needs: [secrets, dependencies, workflows, code]
     # Report what the scanners that worked found, even if another one failed.
     if: always()
     runs-on: ubuntu-latest

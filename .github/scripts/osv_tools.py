@@ -39,14 +39,23 @@ def packages(workflow_text):
     return [(name, version, line) for (name, version), line in found.items()]
 
 
+def _check_url(url):
+    if not url.startswith(API + "/"):
+        raise ValueError("unexpected URL: " + url)
+
+
 def _post(url, data):
+    _check_url(url)
     request = urllib.request.Request(url, json.dumps(data).encode(), {"Content-Type": "application/json"})
-    with urllib.request.urlopen(request, timeout=60) as response:
+    # Bandit B310 (file:// URLs): _check_url allows https://api.osv.dev only.
+    with urllib.request.urlopen(request, timeout=60) as response:  # nosec B310
         return json.load(response)
 
 
 def _get(url):
-    with urllib.request.urlopen(url, timeout=60) as response:
+    _check_url(url)
+    # Bandit B310 (file:// URLs): _check_url allows https://api.osv.dev only.
+    with urllib.request.urlopen(url, timeout=60) as response:  # nosec B310
         return json.load(response)
 
 
