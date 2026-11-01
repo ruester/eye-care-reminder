@@ -28,7 +28,7 @@ namespace EyeCareReminder
             Save = "Save",
             Cancel = "Cancel",
             BreakTitle = "Time for an eye break",
-            BreakMessage = "20-20-20 rule: look at something at least 6 meters (20 feet) away for 20 seconds and blink a few times.",
+            BreakMessage = "Look at something at least 6 meters (20 feet) away for 20 seconds and blink a few times.",
             RunningTitle = "Eye Care Reminder is running",
             RunningMessage = "Your next eye break is at {0}. Click the eye icon in the notification area to change the interval.",
         };
@@ -54,7 +54,7 @@ namespace EyeCareReminder
             Save = "Speichern",
             Cancel = "Abbrechen",
             BreakTitle = "Zeit für eine Augenpause",
-            BreakMessage = "20-20-20-Regel: Schauen Sie 20 Sekunden lang auf etwas, das mindestens 6 Meter entfernt ist, und blinzeln Sie ein paar Mal.",
+            BreakMessage = "Schauen Sie 20 Sekunden lang auf etwas, das mindestens 6 Meter entfernt ist, und blinzeln Sie ein paar Mal.",
             RunningTitle = "Eye Care Reminder läuft",
             RunningMessage = "Ihre nächste Augenpause ist um {0}. Klicken Sie auf das Augensymbol im Infobereich, um das Intervall zu ändern.",
         };
@@ -80,7 +80,7 @@ namespace EyeCareReminder
             Save = "Enregistrer",
             Cancel = "Annuler",
             BreakTitle = "C'est l'heure de reposer vos yeux",
-            BreakMessage = "Règle 20-20-20 : regardez quelque chose situé à au moins 6 mètres pendant 20 secondes et clignez des yeux plusieurs fois.",
+            BreakMessage = "Regardez quelque chose situé à au moins 6 mètres pendant 20 secondes et clignez des yeux plusieurs fois.",
             RunningTitle = "Eye Care Reminder est lancé",
             RunningMessage = "Votre prochaine pause est à {0}. Cliquez sur l'icône de l'œil dans la zone de notification pour modifier l'intervalle.",
         };
@@ -106,7 +106,7 @@ namespace EyeCareReminder
             Save = "Salva",
             Cancel = "Annulla",
             BreakTitle = "È ora di una pausa per gli occhi",
-            BreakMessage = "Regola 20-20-20: guarda qualcosa ad almeno 6 metri di distanza per 20 secondi e sbatti le palpebre alcune volte.",
+            BreakMessage = "Guarda qualcosa ad almeno 6 metri di distanza per 20 secondi e sbatti le palpebre alcune volte.",
             RunningTitle = "Eye Care Reminder è in esecuzione",
             RunningMessage = "La prossima pausa per gli occhi è alle {0}. Fai clic sull'icona dell'occhio nell'area di notifica per modificare l'intervallo.",
         };
@@ -132,7 +132,7 @@ namespace EyeCareReminder
             Save = "Guardar",
             Cancel = "Cancelar",
             BreakTitle = "Hora de descansar la vista",
-            BreakMessage = "Regla 20-20-20: mira algo que esté al menos a 6 metros de distancia durante 20 segundos y parpadea varias veces.",
+            BreakMessage = "Mira algo que esté al menos a 6 metros de distancia durante 20 segundos y parpadea varias veces.",
             RunningTitle = "Eye Care Reminder se está ejecutando",
             RunningMessage = "Tu próximo descanso visual es a las {0}. Haz clic en el icono del ojo en el área de notificación para cambiar el intervalo.",
         };
@@ -158,7 +158,7 @@ namespace EyeCareReminder
             Save = "Guardar",
             Cancel = "Cancelar",
             BreakTitle = "Hora de uma pausa para os olhos",
-            BreakMessage = "Regra 20-20-20: olhe para algo a pelo menos 6 metros de distância durante 20 segundos e pestaneje algumas vezes.",
+            BreakMessage = "Olhe para algo a pelo menos 6 metros de distância durante 20 segundos e pestaneje algumas vezes.",
             RunningTitle = "O Eye Care Reminder está em execução",
             RunningMessage = "A sua próxima pausa para os olhos é às {0}. Clique no ícone do olho na área de notificação para alterar o intervalo.",
         };
@@ -184,7 +184,7 @@ namespace EyeCareReminder
             Save = "Opslaan",
             Cancel = "Annuleren",
             BreakTitle = "Tijd voor een oogpauze",
-            BreakMessage = "20-20-20-regel: kijk 20 seconden lang naar iets dat minstens 6 meter verderop is en knipper een paar keer met je ogen.",
+            BreakMessage = "Kijk 20 seconden lang naar iets dat minstens 6 meter verderop is en knipper een paar keer met je ogen.",
             RunningTitle = "Eye Care Reminder is actief",
             RunningMessage = "Je volgende oogpauze is om {0}. Klik op het oogpictogram in het systeemvak om het interval te wijzigen.",
         };
@@ -210,7 +210,7 @@ namespace EyeCareReminder
             Save = "Lagre",
             Cancel = "Avbryt",
             BreakTitle = "Tid for en øyepause",
-            BreakMessage = "20-20-20-regelen: se på noe som er minst 6 meter unna i 20 sekunder, og blunk noen ganger.",
+            BreakMessage = "Se på noe som er minst 6 meter unna i 20 sekunder, og blunk noen ganger.",
             RunningTitle = "Eye Care Reminder kjører",
             RunningMessage = "Neste øyepause er kl. {0}. Klikk på øyeikonet i varslingsområdet for å endre intervallet.",
         };
@@ -236,7 +236,7 @@ namespace EyeCareReminder
             Save = "Spara",
             Cancel = "Avbryt",
             BreakTitle = "Dags för en ögonpaus",
-            BreakMessage = "20-20-20-regeln: titta på något som är minst 6 meter bort i 20 sekunder och blinka några gånger.",
+            BreakMessage = "Titta på något som är minst 6 meter bort i 20 sekunder och blinka några gånger.",
             RunningTitle = "Eye Care Reminder körs",
             RunningMessage = "Nästa ögonpaus är kl. {0}. Klicka på ögonikonen i meddelandefältet för att ändra intervallet.",
         };
@@ -262,7 +262,7 @@ namespace EyeCareReminder
             Save = "Tallenna",
             Cancel = "Peruuta",
             BreakTitle = "Aika pitää silmätauko",
-            BreakMessage = "20-20-20-sääntö: katso vähintään 6 metrin päässä olevaa kohdetta 20 sekunnin ajan ja räpäytä silmiä muutaman kerran.",
+            BreakMessage = "Katso vähintään 6 metrin päässä olevaa kohdetta 20 sekunnin ajan ja räpäytä silmiä muutaman kerran.",
             RunningTitle = "Eye Care Reminder on käynnissä",
             RunningMessage = "Seuraava silmätauko on klo {0}. Voit muuttaa väliä napsauttamalla silmäkuvaketta ilmaisinalueella.",
         };
@@ -288,7 +288,7 @@ namespace EyeCareReminder
             Save = "Uložit",
             Cancel = "Zrušit",
             BreakTitle = "Čas na přestávku pro oči",
-            BreakMessage = "Pravidlo 20-20-20: dívejte se 20 sekund na něco, co je alespoň 6 metrů daleko, a několikrát mrkněte.",
+            BreakMessage = "Dívejte se 20 sekund na něco, co je alespoň 6 metrů daleko, a několikrát mrkněte.",
             RunningTitle = "Eye Care Reminder je spuštěný",
             RunningMessage = "Další přestávka pro oči je v {0}. Interval změníte kliknutím na ikonu oka v oznamovací oblasti.",
         };
@@ -314,7 +314,7 @@ namespace EyeCareReminder
             Save = "Zapisz",
             Cancel = "Anuluj",
             BreakTitle = "Czas na przerwę dla oczu",
-            BreakMessage = "Zasada 20-20-20: patrz przez 20 sekund na coś oddalonego o co najmniej 6 metrów i kilka razy mrugnij.",
+            BreakMessage = "Patrz przez 20 sekund na coś oddalonego o co najmniej 6 metrów i kilka razy mrugnij.",
             RunningTitle = "Eye Care Reminder działa",
             RunningMessage = "Następna przerwa dla oczu o {0}. Kliknij ikonę oka w obszarze powiadomień, aby zmienić interwał.",
         };
@@ -340,7 +340,7 @@ namespace EyeCareReminder
             Save = "Spremi",
             Cancel = "Odustani",
             BreakTitle = "Vrijeme je za stanku za oči",
-            BreakMessage = "Pravilo 20-20-20: gledajte 20 sekundi u nešto što je udaljeno najmanje 6 metara i nekoliko puta trepnite.",
+            BreakMessage = "Gledajte 20 sekundi u nešto što je udaljeno najmanje 6 metara i nekoliko puta trepnite.",
             RunningTitle = "Eye Care Reminder je pokrenut",
             RunningMessage = "Sljedeća stanka za oči je u {0}. Kliknite ikonu oka u području obavijesti da biste promijenili interval.",
         };
