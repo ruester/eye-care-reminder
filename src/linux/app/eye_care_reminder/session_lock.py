@@ -2,8 +2,9 @@
 
 Listens on D-Bus to the screen savers / lockers of the common desktops
 (xfce4-screensaver, light-locker and others implementing
-org.freedesktop.ScreenSaver, GNOME, Cinnamon, MATE) and to systemd-logind
-(Unlock signal and LockedHint of this session).
+org.freedesktop.ScreenSaver, GNOME, Cinnamon, MATE), to Unity's lock screen
+(com.canonical.Unity.Session Unlocked) and to systemd-logind (Unlock signal and
+LockedHint of this session).
 """
 
 import os
@@ -17,6 +18,8 @@ SCREEN_SAVER_INTERFACES = (
     "org.cinnamon.ScreenSaver",
     "org.mate.ScreenSaver",
 )
+
+UNITY_SESSION = "com.canonical.Unity.Session"
 
 LOGIN1 = "org.freedesktop.login1"
 
@@ -33,6 +36,8 @@ class UnlockWatcher:
             for interface in SCREEN_SAVER_INTERFACES:
                 session_bus.signal_subscribe(None, interface, "ActiveChanged", None, None,
                                              Gio.DBusSignalFlags.NONE, self._on_active_changed)
+            session_bus.signal_subscribe(None, UNITY_SESSION, "Unlocked", None, None,
+                                         Gio.DBusSignalFlags.NONE, lambda *_: self.on_unlock())
         except GLib.Error:
             pass
         try:

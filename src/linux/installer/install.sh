@@ -2,7 +2,7 @@
 # Eye Care Reminder - Linux installer (run by the self-extracting .bin, see header.sh).
 #
 # Installs the app (Python 3 + GTK 3, the same for every desktop environment;
-# Xfce is the primary target) with a menu entry and an autostart entry:
+# supported: Xfce and Ubuntu Unity) with a menu entry and an autostart entry:
 #   - as a normal user: for this user only (~/.local/share/eye-care-reminder),
 #   - as root: for all users (/opt/eye-care-reminder).
 # Running a newer .bin upgrades in place. The installed copy of this script,
@@ -104,8 +104,9 @@ if [ "$action" = uninstall ]; then
 fi
 
 # --- Compatibility check (before anything is installed) ---
-# Supported: Linux with Python 3.8+, PyGObject, GTK 3 and pycairo; made for Xfce
-# (other desktops work with limitations). EYE_CARE_REMINDER_PYTHON overrides the
+# Supported: Linux with Python 3.8+, PyGObject, GTK 3 and pycairo on Xfce and on
+# Ubuntu Unity (there also AppIndicator: Unity's panel only shows AppIndicators);
+# other desktops work with limitations. EYE_CARE_REMINDER_PYTHON overrides the
 # Python interpreter (used by the tests).
 
 # Prints the Python version and the available modules, e.g. "3.12 gi gtk cairo indicator".
@@ -137,6 +138,7 @@ except ImportError:
 print(" ".join(found))
 '
 REQUIRED_MODULES="gi gtk cairo"
+required_modules=$REQUIRED_MODULES  # plus "indicator" on Unity (check_system)
 
 python_candidates() {
     if [ -n "${EYE_CARE_REMINDER_PYTHON:-}" ]; then
@@ -151,7 +153,7 @@ has_module() { case " $modules " in *" $1 "*) return 0 ;; esac; return 1; }
 
 # Whether the probe result $1 contains every required module.
 has_required_modules() {
-    for module in $REQUIRED_MODULES; do
+    for module in $required_modules; do
         case " $1 " in
             *" $module "*) ;;
             *) return 1 ;;
@@ -240,6 +242,7 @@ describe() {
         gtk) echo "GTK 3" ;;
         cairo) echo "cairo support for PyGObject (pycairo)" ;;
         indicator) echo "AppIndicator (tray icon outside Xfce)" ;;
+        indicator-unity) echo "AppIndicator (tray icon in Unity's panel)" ;;
     esac
 }
 
@@ -281,6 +284,10 @@ check_system() {
     desktop=${XDG_CURRENT_DESKTOP:-}
     case "$(printf '%s' "$desktop" | tr '[:upper:]' '[:lower:]')" in
         *xfce*) report ok "Desktop: Xfce" ;;
+        unity*|*:unity*)
+            report ok "Desktop: Unity"
+            required_modules="$REQUIRED_MODULES indicator"
+            ;;
         "") report note "No desktop session found (e.g. over SSH): the app starts at the next login" ;;
         *)
             report note "Desktop: $desktop is not officially supported (made for Xfce): the reminders work, the tray icon depends on the desktop"
@@ -302,7 +309,7 @@ check_system() {
     find_python
     if [ -z "$python" ]; then
         report missing "$(describe python)"
-        missing="python $REQUIRED_MODULES"
+        missing="python $required_modules"
         return
     fi
     if ! python_version_ok; then
@@ -311,11 +318,13 @@ check_system() {
         return
     fi
     report ok "Python $python_version ($python)"
-    for module in $REQUIRED_MODULES; do
+    for module in $required_modules; do
+        name=$module
+        [ "$module" != indicator ] || name=indicator-unity
         if has_module "$module"; then
-            report ok "$(describe "$module")"
+            report ok "$(describe "$name")"
         else
-            report missing "$(describe "$module")"
+            report missing "$(describe "$name")"
             missing="$missing $module"
         fi
     done

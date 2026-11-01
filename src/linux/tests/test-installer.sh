@@ -55,13 +55,19 @@ echo "== Compatibility check"
 fakes=$(mktemp -d)
 printf '#!/bin/sh\necho 3.6\n' > "$fakes/old-python"
 printf '#!/bin/sh\necho 3.12 gi\n' > "$fakes/python-without-gtk"
-chmod +x "$fakes/old-python" "$fakes/python-without-gtk"
+printf '#!/bin/sh\necho 3.12 gi gtk cairo\n' > "$fakes/python-without-indicator"
+printf '#!/bin/sh\necho 3.12 gi gtk cairo indicator\n' > "$fakes/python-with-indicator"
+chmod +x "$fakes"/*
 check "--check passes" sh "$new_bin" --check
 check "--check reports compatible" sh -c "sh '$new_bin' --check | grep -q 'This system is compatible'"
 check "old Python is rejected" sh -c "! EYE_CARE_REMINDER_PYTHON='$fakes/old-python' sh '$new_bin' --check </dev/null"
 check "missing GTK is reported" sh -c "EYE_CARE_REMINDER_PYTHON='$fakes/python-without-gtk' sh '$new_bin' --check </dev/null | grep -q 'missing  GTK 3'"
 check "missing Python is reported" sh -c "EYE_CARE_REMINDER_PYTHON=/nonexistent sh '$new_bin' --check </dev/null | grep -q 'missing  Python 3'"
 check "no install with missing dependencies" sh -c "! EYE_CARE_REMINDER_PYTHON='$fakes/python-without-gtk' sh '$new_bin' </dev/null"
+check "Unity is supported" sh -c "XDG_CURRENT_DESKTOP=Unity:Unity7:ubuntu EYE_CARE_REMINDER_PYTHON='$fakes/python-with-indicator' sh '$new_bin' --check </dev/null | grep -q 'ok       Desktop: Unity'"
+check "Unity requires AppIndicator" sh -c "! XDG_CURRENT_DESKTOP=Unity:Unity7:ubuntu EYE_CARE_REMINDER_PYTHON='$fakes/python-without-indicator' sh '$new_bin' --check </dev/null"
+check "missing AppIndicator is reported on Unity" sh -c "XDG_CURRENT_DESKTOP=Unity:Unity7:ubuntu EYE_CARE_REMINDER_PYTHON='$fakes/python-without-indicator' sh '$new_bin' --check </dev/null | grep -q 'missing  AppIndicator'"
+check "AppIndicator is optional on Xfce" sh -c "EYE_CARE_REMINDER_PYTHON='$fakes/python-without-indicator' sh '$new_bin' --check </dev/null"
 check "nothing installed" test ! -e "$app_dir"
 rm -rf "$fakes"
 

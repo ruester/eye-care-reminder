@@ -2,18 +2,21 @@
 
 Xfce (and other X11 panels with a notification area / status tray) get a
 Gtk.StatusIcon: left click opens the settings, right click the menu, the
-tooltip shows the next break. Elsewhere an AppIndicator (StatusNotifierItem:
-KDE Plasma, Unity, GNOME with the AppIndicator extension, ...) is used if its
-library is installed; it only has a menu, so the next break is a menu entry.
+tooltip shows the next break. Ubuntu Unity's panel only shows AppIndicators;
+there and on other desktops an AppIndicator (StatusNotifierItem: Unity, KDE
+Plasma, GNOME with the AppIndicator extension, ...) is used if its library is
+installed. It only has a menu (any click opens it, middle click opens the
+settings), so the next break is a menu entry.
 """
 
 import os
+import sys
 import warnings
 
 import gi
 from gi.repository import Gdk, GLib, Gtk
 
-from . import APP_ID, APP_NAME, painting
+from . import APP_ID, APP_NAME, desktop, painting
 from .translations import mnemonic
 
 with warnings.catch_warnings():
@@ -28,13 +31,11 @@ with warnings.catch_warnings():
         except (ImportError, ValueError):
             AppIndicator = None
 
+ICON_NAME = "eye-care-reminder"  # icons/eye-care-reminder.svg
+
 
 def use_app_indicator(environ=None):
-    """StatusIcon on Xfce and whenever no AppIndicator library is installed."""
-    environ = os.environ if environ is None else environ
-    if AppIndicator is None:
-        return False
-    return "xfce" not in environ.get("XDG_CURRENT_DESKTOP", "").lower()
+    return desktop.tray_kind(AppIndicator is not None, environ) == desktop.APP_INDICATOR
 
 
 class Tray:
@@ -50,6 +51,10 @@ class Tray:
         self.indicator = None
         self.status_icon = None
 
+        if desktop.missing_tray_support(AppIndicator is not None):
+            print("eye-care-reminder: the tray icon needs AppIndicator on Unity "
+                  "(package gir1.2-ayatanaappindicator3-0.1); "
+                  "open the settings from the application menu.", file=sys.stderr)
         if use_app_indicator():
             self.menu.append(self.next_break_item)
             self.menu.append(Gtk.SeparatorMenuItem())
@@ -58,8 +63,11 @@ class Tray:
         self.menu.show_all()
 
         if use_app_indicator():
-            self.indicator = AppIndicator.Indicator.new(
-                APP_ID, icon_path, AppIndicator.IndicatorCategory.APPLICATION_STATUS)
+            # Icon by name from the app's icons folder: the panel picks the SVG and renders it
+            # sharply at its own size (Unity's panel: 22 px).
+            self.indicator = AppIndicator.Indicator.new_with_path(
+                APP_ID, ICON_NAME, AppIndicator.IndicatorCategory.APPLICATION_STATUS,
+                os.path.dirname(icon_path))
             self.indicator.set_title(APP_NAME)
             self.indicator.set_menu(self.menu)
             self.indicator.set_secondary_activate_target(self.settings_item)

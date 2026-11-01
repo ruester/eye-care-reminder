@@ -4,15 +4,27 @@ On X11 the app draws its own popup in the bottom-right corner of the primary
 monitor's work area (as on Windows): borderless, always on top, never takes
 the focus, shown regardless of the desktop's Do Not Disturb setting, with a
 countdown bar that shrinks from right to left until it closes; a click closes
-it. Without X11 (pure Wayland, where windows can't position themselves) a
-standard desktop notification (org.freedesktop.Notifications) is sent instead.
+it. The override-redirect popup needs no window manager, so it also shows when
+the window manager is missing or broken.
+
+If that is not possible (pure Wayland, where windows can't position themselves)
+or fails, the reminder falls back step by step until one works:
+1. the desktop's notification daemon (org.freedesktop.Notifications, if running
+   or D-Bus activatable),
+2. if none runs: start an installed one (mako on Wayland, dunst; e.g. i3 or sway
+   without an autostarted daemon) and use it,
+3. notify-send, 4. kdialog --passivepopup (if installed, see fallback.py),
+5. an ordinary window of the app (any window manager, Wayland too),
+6. xmessage.
 """
 
+import os
+import sys
 import time
 
 from gi.repository import Gdk, Gio, GLib, Gtk, Pango
 
-from . import APP_NAME, countdown, painting
+from . import APP_NAME, countdown, fallback, painting
 
 SCREEN_MARGIN = 12
 COUNTDOWN_TICK_MS = 30
@@ -27,13 +39,20 @@ def own_popups_supported():
     return "X11" in type(Gdk.Display.get_default()).__name__
 
 
+def _log(text):
+    print("eye-care-reminder: %s" % text, file=sys.stderr)
+
+
 def show(title, message, timeout_ms, icon_path, on_closed=None):
     """Shows a reminder; timeout_ms 0 keeps it until it is clicked. Returns an object with close()."""
     if own_popups_supported():
-        popup = NotificationPopup(title, message, timeout_ms, on_closed)
-        popup.present_without_focus()
-        return popup
-    return DesktopNotification(title, message, timeout_ms, icon_path)
+        try:
+            popup = NotificationPopup(title, message, timeout_ms, on_closed)
+            popup.present_without_focus()
+            return popup
+        except Exception as error:  # noqa: BLE001 - any failure: use the fallbacks
+            _log("cannot show the popup (%s), using a fallback" % error)
+    return FallbackReminder(title, message, timeout_ms, icon_path)
 
 
 def _rgb(cr, color):
@@ -43,15 +62,23 @@ def _rgb(cr, color):
 class NotificationPopup(Gtk.Window):
     _css_installed = False
 
-    def __init__(self, title, message, timeout_ms, on_closed=None):
-        super().__init__(type=Gtk.WindowType.POPUP)
+    def __init__(self, title, message, timeout_ms, on_closed=None, managed=False):
+        """managed: an ordinary window handled by the window manager (fallback)."""
+        super().__init__(type=Gtk.WindowType.TOPLEVEL if managed else Gtk.WindowType.POPUP)
         self._install_css()
         self.timeout_ms = timeout_ms
         self.on_closed = on_closed
         self.started = None
         self.timer_id = None
         self.closed = False
-        self.set_type_hint(Gdk.WindowTypeHint.NOTIFICATION)
+        if managed:
+            self.set_title(APP_NAME)
+            self.set_resizable(False)
+            self.set_urgency_hint(True)
+            self.set_icon(Gdk.pixbuf_get_from_surface(painting.icon_surface(64), 0, 0, 64, 64))
+            self.connect("delete-event", lambda *_: self.close() or True)
+        else:
+            self.set_type_hint(Gdk.WindowTypeHint.NOTIFICATION)
         self.set_keep_above(True)
         self.set_accept_focus(False)
         self.set_focus_on_map(False)
@@ -175,22 +202,45 @@ class NotificationPopup(Gtk.Window):
             self.on_closed(self)
 
 
+NOTIFICATIONS = "org.freedesktop.Notifications"
+
+
+def _notification_daemon_available(bus):
+    """Whether a notification daemon runs or can be started by D-Bus activation."""
+    for method in ("NameHasOwner", "ListActivatableNames"):
+        try:
+            result = bus.call_sync(
+                "org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus", method,
+                GLib.Variant("(s)", (NOTIFICATIONS,)) if method == "NameHasOwner" else None,
+                None, Gio.DBusCallFlags.NONE, 2000, None).unpack()[0]
+        except GLib.Error:
+            continue
+        if result is True or (isinstance(result, list) and NOTIFICATIONS in result):
+            return True
+    return False
+
+
 class DesktopNotification:
-    """Fallback without X11: a notification of the desktop's notification daemon."""
+    """A notification of the desktop's notification daemon; ok is False if it failed."""
 
     def __init__(self, title, message, timeout_ms, icon_path):
         self.id = 0
+        self.ok = False
         try:
             self.bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+            if not _notification_daemon_available(self.bus):
+                _log("no notification daemon")
+                return
             result = self.bus.call_sync(
                 "org.freedesktop.Notifications", "/org/freedesktop/Notifications",
                 "org.freedesktop.Notifications", "Notify",
                 GLib.Variant("(susssasa{sv}i)", (APP_NAME, 0, icon_path or "", title, message, [],
                                                 {"urgency": GLib.Variant("y", 1)}, timeout_ms)),
-                GLib.VariantType("(u)"), Gio.DBusCallFlags.NONE, -1, None)
+                GLib.VariantType("(u)"), Gio.DBusCallFlags.NONE, 10000, None)
             self.id = result.unpack()[0]
+            self.ok = True
         except GLib.Error as error:
-            print("eye-care-reminder: cannot show a notification: %s" % error.message)
+            _log("cannot show a desktop notification: %s" % error.message)
 
     def close(self):
         if not self.id:
@@ -203,3 +253,121 @@ class DesktopNotification:
         except GLib.Error:
             pass
         self.id = 0
+
+
+class FallbackReminder:
+    """Tries the fallbacks in order until one shows the reminder (see the module docstring)."""
+
+    def __init__(self, title, message, timeout_ms, icon_path):
+        self.title, self.message, self.timeout_ms, self.icon_path = title, message, timeout_ms, icon_path
+        self.current = None      # object with close() of the step that worked
+        self.process = None      # running command
+        self.closed = False
+        commands = fallback.commands((fallback.notify_send, fallback.kdialog), title, message,
+                                     timeout_ms, icon_path, APP_NAME)
+        last = fallback.commands((fallback.xmessage,), title, message, timeout_ms, icon_path, APP_NAME)
+        daemons = fallback.notification_daemons(os.environ)
+        self.steps = [self._desktop_notification] \
+            + [lambda command=command: self._start_daemon(command) for command in daemons] \
+            + [lambda command=command: self._command(command) for command in commands] \
+            + [self._window] \
+            + [lambda command=command: self._command(command) for command in last]
+        self._next()
+
+    def _next(self):
+        """Runs the next step; a step returns True (shown), False (failed) or None (pending)."""
+        while self.steps and not self.closed:
+            result = self.steps.pop(0)()
+            if result is None or result:
+                return
+        if not self.steps and not self.closed and self.current is None and self.process is None:
+            _log("no way to show the reminder: %s - %s" % (self.title, self.message))
+
+    def _desktop_notification(self):
+        notification = DesktopNotification(self.title, self.message, self.timeout_ms, self.icon_path)
+        if notification.ok:
+            self.current = notification
+        return notification.ok
+
+    def _start_daemon(self, command):
+        """Starts a notification daemon (it keeps running) and notifies through it."""
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        if _notification_daemon_available(bus):  # e.g. started meanwhile
+            return self._desktop_notification()
+        try:
+            process = Gio.Subprocess.new(command, Gio.SubprocessFlags.NONE)
+        except GLib.Error as error:
+            _log("cannot start %s: %s" % (command[0], error.message))
+            return False
+        _log("no notification daemon running: started %s" % command[0])
+        deadline = time.monotonic() + fallback.STARTUP_SECONDS
+
+        def poll():
+            if self.closed:
+                return False
+            if _notification_daemon_available(bus):
+                if not self._desktop_notification():
+                    self._next()
+                return False
+            if process.get_identifier() is None or time.monotonic() > deadline:
+                _log("%s did not start" % command[0])
+                if process.get_identifier() is not None:
+                    process.force_exit()
+                self._next()
+                return False
+            return True
+
+        GLib.timeout_add(100, poll)
+        return None
+
+    def _window(self):
+        try:
+            window = NotificationPopup(self.title, self.message, self.timeout_ms, managed=True)
+            window.present_without_focus()
+        except Exception as error:  # noqa: BLE001 - any failure: next fallback
+            _log("cannot open a window: %s" % error)
+            return False
+        self.current = window
+        return True
+
+    def _command(self, command):
+        """Runs a command: shown if it exits with 0 or still runs after STARTUP_SECONDS."""
+        try:
+            process = Gio.Subprocess.new(command, Gio.SubprocessFlags.STDOUT_SILENCE)
+        except GLib.Error as error:
+            _log("cannot run %s: %s" % (command[0], error.message))
+            return False
+        self.process = process
+        state = {"done": False}
+
+        def finished(proc, result):
+            try:
+                proc.wait_finish(result)
+                success = proc.get_if_exited() and proc.get_exit_status() == 0
+            except GLib.Error:
+                success = False
+            if self.process is proc:
+                self.process = None
+            if state["done"]:
+                return
+            state["done"] = True
+            if not success:
+                _log("%s failed" % command[0])
+                self._next()
+
+        def still_running():
+            state["done"] = True
+            return False
+
+        process.wait_async(None, finished)
+        GLib.timeout_add_seconds(fallback.STARTUP_SECONDS, still_running)
+        return None
+
+    def close(self):
+        self.closed = True
+        if self.current is not None:
+            self.current.close()
+            self.current = None
+        if self.process is not None:
+            self.process.force_exit()
+            self.process = None
