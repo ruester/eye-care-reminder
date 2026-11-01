@@ -21,7 +21,13 @@ function Write-Step([string]$Message) {
 
 function Invoke-Msi([string]$Action, [string]$Msi, [string]$Log, [string]$Properties = '') {
     Write-Step "msiexec $Action $Msi $Properties"
-    $process = Start-Process msiexec.exe -ArgumentList "$Action `"$Msi`" $Properties /qn /l*v `"$Log`"" -Wait -PassThru
+    # WaitForExit instead of -Wait: -Wait also waits for every process msiexec started.
+    $process = Start-Process msiexec.exe -ArgumentList "$Action `"$Msi`" $Properties /qn /l*v `"$Log`"" -PassThru
+    if (-not $process.WaitForExit(5 * 60 * 1000)) {
+        Get-Content $Log -Tail 60 -ErrorAction SilentlyContinue
+        Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+        throw "msiexec $Action $Msi did not finish within 5 minutes"
+    }
     if ($process.ExitCode -ne 0) {
         # Show what failed: the lines leading up to the first failing action.
         $failure = Select-String -Path $Log -Pattern 'Return value 3' | Select-Object -First 1
