@@ -1,13 +1,16 @@
 <#
   Builds the multilingual MSI (called by `just build-windows`):
   1. builds Package.wxs once per culture with l10n/<culture>.wxl,
-  2. uses the en-US MSI as the base and creates a language transform (.mst) from it
-     to every other culture's MSI,
-  3. embeds the transforms into the base MSI, named by their LCID, and lists all LCIDs
-     in the summary information (Template). Windows Installer then applies the
+  2. derives a code-page-neutral base from the en-US MSI (ASCII-only country names,
+     code page 0): a transform can't change a fixed code page, but it can give a
+     neutral database one (1252 for Western, 1250 for Central European languages),
+  3. creates a language transform (.mst) from the base to every culture's MSI
+     (en-US too) and embeds them into the base, named by their LCID, and lists all
+     LCIDs in the summary information (Template). Windows Installer then applies the
      transform matching the Windows display language automatically (also for /qn);
-     TRANSFORMS=:<LCID> forces one,
-  4. checks every transform by applying it to a copy of the base MSI.
+     TRANSFORMS=:<LCID> forces one. Other display languages get the neutral base
+     (English with "Belgie", "Cesko", "Espana" in the language list),
+  4. checks every transform by applying it to a copy of the result.
 #>
 param(
     [Parameter(Mandatory)][string]$Version,
@@ -22,14 +25,17 @@ function Get-FullPath([string]$Path) { $ExecutionContext.SessionState.Path.GetUn
 $PayloadDir = Get-FullPath $PayloadDir
 $Output = Get-FullPath $Output
 
-# Culture -> LCID. en-US is the base (also used for every other display language).
+# Culture -> LCID.
 $cultures = [ordered]@{
     'en-US' = 1033; 'de-DE' = 1031; 'fr-FR' = 1036; 'it-IT' = 1040; 'es-ES' = 3082
     'pt-PT' = 2070; 'nl-NL' = 1043; 'nb-NO' = 1044; 'sv-SE' = 1053; 'fi-FI' = 1035
     'cs-CZ' = 1029; 'pl-PL' = 1045; 'hr-HR' = 1050
 }
+$codepage1250 = 'cs-CZ', 'pl-PL', 'hr-HR'
 # Further display languages that get the transform of another culture.
 $aliases = @{ 2058 = 'es-ES' <# es-MX #>; 3084 = 'fr-FR' <# fr-CA #> }
+# Non-ASCII country names of the language list (Package.wxs) -> ASCII spelling for the neutral base.
+$asciiNames = @{ 'nl-BE' = 'Belgie'; 'cs' = 'Cesko'; 'es' = 'Espana' }
 
 $installerDir = $PSScriptRoot
 $work = [string](Join-Path (Split-Path -Parent $Output) 'windows\msi')
@@ -39,36 +45,6 @@ function Invoke-Native([string]$Description, [scriptblock]$Command) {
     & $Command
     if ($LASTEXITCODE -ne 0) { throw "$Description failed with exit code $LASTEXITCODE" }
 }
-
-# --- 1. One MSI per culture ---
-foreach ($culture in $cultures.Keys) {
-    Invoke-Native "wix build ($culture)" {
-        wix build (Join-Path $installerDir 'Package.wxs') -arch x64 `
-            -ext WixToolset.Util.wixext -ext WixToolset.UI.wixext `
-            -culture $culture -loc (Join-Path $installerDir "l10n/$culture.wxl") `
-            -d Version=$Version -bindpath payload=$PayloadDir `
-            -o (Join-Path $work "$culture.msi")
-    }
-}
-
-# --- 2. Language transforms against the en-US base ---
-$base = Join-Path $work 'en-US.msi'
-# LCID (as string: an [ordered] dictionary indexed with an int returns the n-th entry) -> .mst
-$transforms = [ordered]@{}
-foreach ($culture in $cultures.Keys) {
-    if ($culture -eq 'en-US') { continue }
-    $mst = Join-Path $work "$culture.mst"
-    Invoke-Native "wix msi transform ($culture)" {
-        wix msi transform -t language -o $mst $base (Join-Path $work "$culture.msi")
-    }
-    $transforms["$($cultures[$culture])"] = $mst
-}
-foreach ($lcid in $aliases.Keys) {
-    $transforms["$lcid"] = $transforms["$($cultures[$aliases[$lcid]])"]
-}
-
-# --- 3. Embed the transforms into a copy of the base MSI ---
-Copy-Item $base $Output -Force
 
 function Invoke-Com($Object, [string]$Name, [string]$Kind, [object[]]$Arguments = @()) {
     # Pass plain .NET values: PowerShell-wrapped ones (PSObject) cause DISP_E_TYPEMISMATCH.
@@ -84,65 +60,119 @@ function Invoke-Com($Object, [string]$Name, [string]$Kind, [object[]]$Arguments 
     }
 }
 
+function Release($ComObject) {
+    if ($ComObject) { [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($ComObject) }
+}
+
 $installer = New-Object -ComObject WindowsInstaller.Installer
-$msiOpenDatabaseModeReadOnly = 0
 $msiOpenDatabaseModeTransact = 1
 $msiViewModifyAssign = 3
 $pidTemplate = 7
 
-$database = Invoke-Com $installer OpenDatabase InvokeMethod @($Output, $msiOpenDatabaseModeTransact)
+function Open-Database([string]$Path) { Invoke-Com $installer OpenDatabase InvokeMethod @($Path, $msiOpenDatabaseModeTransact) }
+
+function Invoke-Sql($Database, [string]$Query) {
+    $view = Invoke-Com $Database OpenView InvokeMethod @($Query)
+    Invoke-Com $view Execute InvokeMethod | Out-Null
+    Invoke-Com $view Close InvokeMethod | Out-Null
+    Release $view
+}
+
+function Get-Value($Database, [string]$Query) {
+    $view = Invoke-Com $Database OpenView InvokeMethod @($Query)
+    Invoke-Com $view Execute InvokeMethod | Out-Null
+    $record = Invoke-Com $view Fetch InvokeMethod
+    $value = if ($record) { Invoke-Com $record StringData GetProperty @(1) } else { $null }
+    Invoke-Com $view Close InvokeMethod | Out-Null
+    Release $view
+    $value
+}
+
+function Get-CountryName($Database, [string]$Code) {
+    Get-Value $Database "SELECT ``Text`` FROM ``ComboBox`` WHERE ``Property`` = 'APPLANGUAGE' AND ``Value`` = '$Code'"
+}
+
+# --- 1. One MSI per culture ---
+foreach ($culture in $cultures.Keys) {
+    Invoke-Native "wix build ($culture)" {
+        wix build (Join-Path $installerDir 'Package.wxs') -arch x64 `
+            -ext WixToolset.Util.wixext -ext WixToolset.UI.wixext `
+            -culture $culture -loc (Join-Path $installerDir "l10n/$culture.wxl") `
+            -d Version=$Version -bindpath payload=$PayloadDir `
+            -o (Join-Path $work "$culture.msi")
+    }
+}
+
+# --- 2. Code-page-neutral base ---
+$base = [string](Join-Path $work 'neutral.msi')
+Copy-Item (Join-Path $work 'en-US.msi') $base -Force
+$database = Open-Database $base
+foreach ($code in $asciiNames.Keys) {
+    Invoke-Sql $database "UPDATE ``ComboBox`` SET ``Text`` = '$($asciiNames[$code])' WHERE ``Property`` = 'APPLANGUAGE' AND ``Value`` = '$code'"
+}
+# A database's code page is set by importing the _ForceCodepage pseudo table.
+[System.IO.File]::WriteAllText((Join-Path $work '_ForceCodepage.idt'), "`r`n`r`n0`t_ForceCodepage`r`n", [System.Text.Encoding]::ASCII)
+Invoke-Com $database Import InvokeMethod @($work, '_ForceCodepage.idt') | Out-Null
+Invoke-Com $database Commit InvokeMethod | Out-Null
+Release $database
+
+# --- 3. Language transforms, embedded into a copy of the base ---
+# LCID (as string: an [ordered] dictionary indexed with an int returns the n-th entry) -> .mst
+$transforms = [ordered]@{}
+foreach ($culture in $cultures.Keys) {
+    $mst = Join-Path $work "$culture.mst"
+    Invoke-Native "wix msi transform ($culture)" {
+        wix msi transform -t language -o $mst $base (Join-Path $work "$culture.msi")
+    }
+    $transforms["$($cultures[$culture])"] = $mst
+}
+foreach ($lcid in $aliases.Keys) {
+    $transforms["$lcid"] = $transforms["$($cultures[$aliases[$lcid]])"]
+}
+
+Copy-Item $base $Output -Force
+$database = Open-Database $Output
 $view = Invoke-Com $database OpenView InvokeMethod @('SELECT `Name`, `Data` FROM `_Storages`')
 Invoke-Com $view Execute InvokeMethod | Out-Null
 foreach ($lcid in $transforms.Keys) {
     $record = Invoke-Com $installer CreateRecord InvokeMethod @(2)
-    Invoke-Com $record StringData SetProperty @(1, [string]$lcid) | Out-Null
+    Invoke-Com $record StringData SetProperty @(1, $lcid) | Out-Null
     Invoke-Com $record SetStream InvokeMethod @(2, $transforms[$lcid]) | Out-Null
     Invoke-Com $view Modify InvokeMethod @($msiViewModifyAssign, $record) | Out-Null
 }
 Invoke-Com $view Close InvokeMethod | Out-Null
+Release $view
 
 $summary = Invoke-Com $database SummaryInformation GetProperty @(1)
 $template = Invoke-Com $summary Property GetProperty @($pidTemplate)   # e.g. "x64;1033"
 $platform = $template.Split(';')[0]
-$languages = @('1033') + @($transforms.Keys)
+$languages = @($transforms.Keys)   # 1033 (en-US) first
 Invoke-Com $summary Property SetProperty @($pidTemplate, "$platform;$($languages -join ',')") | Out-Null
 Invoke-Com $summary Persist InvokeMethod | Out-Null
 Invoke-Com $database Commit InvokeMethod | Out-Null
-[void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($view)
-[void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($summary)
-[void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($database)
+Release $summary
+Release $database
 
-# --- 4. Check every transform: apply it and read back language, default and a localized name ---
-function Get-Value($Database, [string]$Query) {
-    $v = Invoke-Com $Database OpenView InvokeMethod @($Query)
-    Invoke-Com $v Execute InvokeMethod | Out-Null
-    $r = Invoke-Com $v Fetch InvokeMethod
-    $value = if ($r) { Invoke-Com $r StringData GetProperty @(1) } else { $null }
-    Invoke-Com $v Close InvokeMethod | Out-Null
-    [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($v)
-    $value
-}
-
+# --- 4. Check every transform: language, app language default and localized country names ---
 foreach ($culture in $cultures.Keys) {
-    if ($culture -eq 'en-US') { continue }
     $lcid = $cultures[$culture]
-    # Copy stays in the intermediate folder (COM may still hold it open).
+    # The copy stays in the intermediate folder (COM may still hold it open).
     $copy = Join-Path $work "check-$culture.msi"
-    Copy-Item $base $copy -Force
-    $db = Invoke-Com $installer OpenDatabase InvokeMethod @($copy, $msiOpenDatabaseModeTransact)
+    Copy-Item $Output $copy -Force
+    $db = Open-Database $copy
     Invoke-Com $db ApplyTransform InvokeMethod @($transforms["$lcid"], 0) | Out-Null
     $productLanguage = Get-Value $db "SELECT ``Value`` FROM ``Property`` WHERE ``Property`` = 'ProductLanguage'"
     $appLanguage = Get-Value $db "SELECT ``Value`` FROM ``Property`` WHERE ``Property`` = 'APPLANGUAGE'"
-    $czechia = Get-Value $db "SELECT ``Text`` FROM ``ComboBox`` WHERE ``Property`` = 'APPLANGUAGE' AND ``Value`` = 'cs'"
-    [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($db)
+    $names = '{0}/{1}/{2}' -f (Get-CountryName $db 'nl-BE'), (Get-CountryName $db 'cs'), (Get-CountryName $db 'es')
+    Release $db
 
-    $expectedCzechia = if ($culture -in 'cs-CZ', 'pl-PL', 'hr-HR') { 'Česko' } else { 'Cesko' }
-    if ($productLanguage -ne [string]$lcid -or $appLanguage -ne $culture.Split('-')[0] -or $czechia -ne $expectedCzechia) {
-        throw "Transform $culture is broken: ProductLanguage=$productLanguage APPLANGUAGE=$appLanguage Czechia=$czechia"
+    $expectedNames = if ($culture -in $codepage1250) { 'België/Česko/Espana' } else { 'België/Cesko/España' }
+    if ($productLanguage -ne "$lcid" -or $appLanguage -ne $culture.Split('-')[0] -or $names -cne $expectedNames) {
+        throw "Transform $culture is broken: ProductLanguage=$productLanguage APPLANGUAGE=$appLanguage names=$names"
     }
-    Write-Host "Transform $culture ($lcid) OK: APPLANGUAGE=$appLanguage, Czechia=$czechia"
+    Write-Host "Transform $culture ($lcid) OK: APPLANGUAGE=$appLanguage, names=$names"
 }
-[void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($installer)
+Release $installer
 [GC]::Collect()
 [GC]::WaitForPendingFinalizers()
 

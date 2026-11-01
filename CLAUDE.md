@@ -122,8 +122,10 @@ suffixes such as `-rc1`.
   the installer's `ComboBox` list in `Package.wxs`, and (for installer texts) a
   culture in `Build-Msi.ps1` plus `l10n/<culture>.wxl`.
 - Installer: `Build-Msi.ps1` builds `Package.wxs` once per culture (13 cultures,
-  `l10n/<culture>.wxl` + the WixUI translations), creates language transforms
-  (`wix msi transform -t language`) against the en-US MSI, embeds them as
+  `l10n/<culture>.wxl` + the WixUI translations), derives a code-page-neutral base
+  (code page 0, ASCII country names) from the en-US MSI because a transform can't
+  change a fixed code page, creates language transforms
+  (`wix msi transform -t language`) from that base to every culture (en-US too), embeds them as
   substorages named by LCID and lists all LCIDs in the summary Template, then
   checks each transform. Windows Installer applies the transform of the Windows
   display language automatically (`TRANSFORMS=:1029` forces one). The wizard
