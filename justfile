@@ -6,7 +6,7 @@ set windows-shell := ["pwsh", "-NoLogo", "-NoProfile", "-Command"]
 # Latest published release. After a tag vX.Y.Z is released, CI runs
 # `just bump-version X.Y.Z` and commits it together with the download links in
 # README.md and site/index.html.
-release_version := "1.3.1"
+release_version := "1.3.2"
 
 # Version stamped into builds, e.g. VERSION=1.2.3 just build-linux. MSI requires x.y.z.
 version := env("VERSION", "0.0.0")
