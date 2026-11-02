@@ -69,6 +69,8 @@ jobs:
       - name: Check the build tools (WiX Toolset and extensions)
         run: python3 .github/scripts/osv_tools.py .github/workflows/build.yml osv-build-tools.sarif
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        # Upload what the other scanner of this job found, even if one failed.
+        if: always()
         with:
           name: sarif-dependencies
           path: "*.sarif"
@@ -121,6 +123,8 @@ jobs:
             --exclude 'test_*.py' --exclude 'src/windows/tests' \
             --sarif --output semgrep.sarif
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        # Upload what the other scanner of this job found, even if one failed.
+        if: always()
         with:
           name: sarif-code
           path: "*.sarif"
