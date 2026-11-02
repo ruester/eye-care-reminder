@@ -101,7 +101,8 @@ suffixes such as `-rc1`.
     D-Bus (if running or activatable), starting an installed mako (Wayland) / dunst,
     `notify-send`, `kdialog --passivepopup`, an ordinary app window (`managed=True`),
     `xmessage`; a command counts as shown if it exits 0 or still runs after 3 s; each
-    failure is logged to stderr), `ui_settings` (dialog with flag language switcher),
+    failure is logged to stderr), `ui_settings` (dialog with flag language switcher and the
+    installed version, `main.display_version` of the `VERSION` file, small at the bottom left),
     `session_lock` (unlock / screen saver end restarts the interval:
     org.freedesktop/xfce/gnome/cinnamon/mate ScreenSaver `ActiveChanged`, Unity's
     `com.canonical.Unity.Session` `Unlocked`, logind `Unlock` and `LockedHint`).
@@ -146,7 +147,8 @@ suffixes such as `-rc1`.
   **.NET Framework 4.8** (preinstalled on Windows 10 1903+ / 11, so the MSI
   needs no runtime). Keep it dependency-free (no NuGet packages).
 - `TrayApplicationContext` owns the tray icon (left click or "Settings..."
-  opens `SettingsForm`, which also has a "Test notification" button; menu also
+  opens `SettingsForm`, which also has a "Test notification" button and shows the installed
+  version small at the bottom left, `AppVersion`: "v1.3.3" from the assembly version; menu also
   has "Take a break now" and "Exit") and a
   timer that shows a notification every interval. Unlocking the session
   restarts the interval.

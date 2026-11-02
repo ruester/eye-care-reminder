@@ -2,7 +2,7 @@
 Choosing a language translates the dialog right away; "Test notification"
 uses the values entered so far, even unsaved ones (as on Windows)."""
 
-from gi.repository import Gdk, GdkPixbuf, Gtk, Pango
+from gi.repository import Gdk, GdkPixbuf, GLib, Gtk, Pango
 
 from . import languages, painting, settings
 
@@ -38,9 +38,10 @@ class LanguageComboBox(Gtk.ComboBox):
 
 
 class SettingsDialog(Gtk.Window):
-    def __init__(self, current, language, icon, on_test, on_save):
+    def __init__(self, current, language, icon, on_test, on_save, version=""):
         """current: Settings; on_test(auto_hide_seconds or 0, texts); on_save(interval_minutes,
-        auto_hide, auto_hide_seconds, language); the dialog closes itself."""
+        auto_hide, auto_hide_seconds, language); the dialog closes itself. version: shown
+        small at the bottom left ("v1.3.3")."""
         super().__init__(title="")
         self.on_test = on_test
         self.on_save = on_save
@@ -76,9 +77,16 @@ class SettingsDialog(Gtk.Window):
         self.language_input.connect("changed", lambda _: self.apply_texts(self.selected_language.texts))
         layout.pack_start(self.language_input, False, False, 0)
 
+        # Bottom row: the installed version, small and gray, at the left; the buttons at the right.
+        bottom = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        bottom.set_margin_top(18)
+        self.version_label = Gtk.Label(xalign=0)
+        self.version_label.set_markup("<small>%s</small>" % GLib.markup_escape_text(version))
+        self.version_label.get_style_context().add_class("dim-label")
+        self.version_label.set_valign(Gtk.Align.CENTER)
+        bottom.pack_start(self.version_label, True, True, 0)
         buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         buttons.set_halign(Gtk.Align.END)
-        buttons.set_margin_top(18)
         self.test_button = Gtk.Button()
         self.test_button.connect(
             "clicked", lambda _: self.on_test(self.auto_hide_seconds if self.auto_hide else 0,
@@ -90,7 +98,8 @@ class SettingsDialog(Gtk.Window):
         self.cancel_button.connect("clicked", lambda _: self.destroy())
         for button in (self.test_button, self.save_button, self.cancel_button):
             buttons.pack_start(button, False, False, 0)
-        layout.pack_start(buttons, False, False, 0)
+        bottom.pack_end(buttons, False, False, 0)
+        layout.pack_start(bottom, False, False, 0)
 
         self.add(layout)
         self.set_default(self.save_button)

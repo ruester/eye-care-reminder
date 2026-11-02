@@ -26,6 +26,7 @@ class MainTests(unittest.TestCase):
             with contextlib.redirect_stdout(out):
                 self.assertEqual(0, main.main(["eye-care-reminder", "--version"], directory))
             self.assertEqual("Eye Care Reminder 1.2.3\n", out.getvalue())
+            self.assertEqual("v1.2.3", main.display_version(main.read_version(directory)))
         finally:
             shutil.rmtree(directory)
 

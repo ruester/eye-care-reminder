@@ -104,12 +104,34 @@ namespace EyeCareReminder
                 AutoSize = true,
                 WrapContents = false,
                 Anchor = AnchorStyles.Right,
-                Margin = new Padding(0, 12, 0, 0),
+                Margin = Padding.Empty,
             };
             buttons.Controls.Add(testButton);
             buttons.Controls.Add(saveButton);
             buttons.Controls.Add(cancelButton);
-            layout.Controls.Add(buttons);
+
+            // Bottom row: the installed version, small and gray, at the left; the buttons at the right.
+            var versionLabel = new Label
+            {
+                AutoSize = true,
+                Text = AppVersion.Display(AppVersion.Current),
+                ForeColor = SystemColors.GrayText,
+                Font = new Font(Font.FontFamily, Font.SizeInPoints - 1),
+                Anchor = AnchorStyles.Left,
+            };
+            var bottom = new TableLayoutPanel
+            {
+                AutoSize = true,
+                ColumnCount = 2,
+                RowCount = 1,
+                Anchor = AnchorStyles.Left | AnchorStyles.Right,
+                Margin = new Padding(0, 12, 0, 0),
+            };
+            bottom.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            bottom.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            bottom.Controls.Add(versionLabel, 0, 0);
+            bottom.Controls.Add(buttons, 1, 0);
+            layout.Controls.Add(bottom);
 
             Controls.Add(layout);
             AcceptButton = saveButton;

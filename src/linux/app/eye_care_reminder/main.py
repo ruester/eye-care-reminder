@@ -14,6 +14,11 @@ def read_version(app_dir):
         return "0.0.0"
 
 
+def display_version(version):
+    """The version as shown in the settings dialog: "v1.3.3"."""
+    return "v" + version
+
+
 def main(argv, app_dir):
     if "--version" in argv[1:]:
         print("%s %s" % (APP_NAME, read_version(app_dir)))

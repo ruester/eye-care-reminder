@@ -10,7 +10,7 @@ import time
 
 from gi.repository import Gdk, Gio, GLib, Gtk
 
-from . import APP_ID, languages, painting, should_open_settings, timeformat, ui_popup
+from . import APP_ID, languages, main, painting, should_open_settings, timeformat, ui_popup
 from .session_lock import UnlockWatcher
 from .settings import Settings
 from .ui_settings import SettingsDialog
@@ -105,7 +105,8 @@ class EyeCareReminderApp(Gtk.Application):
             return
         icon = Gdk.pixbuf_get_from_surface(painting.icon_surface(64), 0, 0, 64, 64)
         self.settings_dialog = SettingsDialog(self.settings, self.language, icon,
-                                              self.show_break_notification, self._save_settings)
+                                              self.show_break_notification, self._save_settings,
+                                              main.display_version(main.read_version(self.app_dir)))
         self.settings_dialog.connect("destroy", self._settings_closed)
         self.add_window(self.settings_dialog)
         self.settings_dialog.present()
