@@ -5,8 +5,8 @@ using System.Globalization;
 namespace EyeCareReminder
 {
     /// <summary>
-    /// A selectable app language, shown with the flag and the native name of its
-    /// country (Belgium appears twice: Dutch and French).
+    /// A selectable app language, shown with its flag and its name in the language itself
+    /// ("Deutsch", "Français", ...); the Belgian variants name the country in brackets.
     /// </summary>
     internal sealed class Language
     {
@@ -34,25 +34,25 @@ namespace EyeCareReminder
     {
         public static readonly Language English = new Language("en", "English", Flags.UnitedKingdom, Translations.English);
 
-        /// <summary>All languages in the order of the language switcher (alphabetical by native name).
+        /// <summary>All languages in the order of the language switcher (alphabetical by native language name).
         /// Keep in sync with the language list in src/windows/installer/Package.wxs.</summary>
         public static readonly IReadOnlyList<Language> All = new[]
         {
-            new Language("fr-BE", "Belgique", Flags.Belgium, Translations.French),
-            new Language("nl-BE", "België", Flags.Belgium, Translations.Dutch),
-            new Language("cs", "Česko", Flags.Czechia, Translations.Czech),
-            new Language("de", "Deutschland", Flags.Germany, Translations.German),
+            new Language("cs", "Čeština", Flags.Czechia, Translations.Czech),
+            new Language("de", "Deutsch", Flags.Germany, Translations.German),
             English,
-            new Language("es", "España", Flags.Spain, Translations.Spanish),
-            new Language("fr", "France", Flags.France, Translations.French),
-            new Language("hr", "Hrvatska", Flags.Croatia, Translations.Croatian),
-            new Language("it", "Italia", Flags.Italy, Translations.Italian),
-            new Language("nl", "Nederland", Flags.Netherlands, Translations.Dutch),
-            new Language("nb", "Norge", Flags.Norway, Translations.Norwegian),
-            new Language("pl", "Polska", Flags.Poland, Translations.Polish),
-            new Language("pt", "Portugal", Flags.Portugal, Translations.Portuguese),
+            new Language("es", "Español", Flags.Spain, Translations.Spanish),
+            new Language("fr", "Français", Flags.France, Translations.French),
+            new Language("fr-BE", "Français (Belgique)", Flags.Belgium, Translations.French),
+            new Language("hr", "Hrvatski", Flags.Croatia, Translations.Croatian),
+            new Language("it", "Italiano", Flags.Italy, Translations.Italian),
+            new Language("nl", "Nederlands", Flags.Netherlands, Translations.Dutch),
+            new Language("nl-BE", "Nederlands (België)", Flags.Belgium, Translations.Dutch),
+            new Language("nb", "Norsk", Flags.Norway, Translations.Norwegian),
+            new Language("pl", "Polski", Flags.Poland, Translations.Polish),
+            new Language("pt", "Português", Flags.Portugal, Translations.Portuguese),
             new Language("fi", "Suomi", Flags.Finland, Translations.Finnish),
-            new Language("sv", "Sverige", Flags.Sweden, Translations.Swedish),
+            new Language("sv", "Svenska", Flags.Sweden, Translations.Swedish),
         };
 
         /// <summary>The language with this code (case-insensitive), or null.</summary>

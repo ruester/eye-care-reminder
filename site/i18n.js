@@ -12,11 +12,11 @@
   "use strict";
 
   var LANGUAGES = [
-    { code: "de", name: "Deutschland", flag: "de" },
+    { code: "de", name: "Deutsch", flag: "de" },
     { code: "en", name: "English", flag: "gb" },
-    { code: "es", name: "España", flag: "es" },
-    { code: "fr", name: "France", flag: "fr" },
-    { code: "it", name: "Italia", flag: "it" },
+    { code: "es", name: "Español", flag: "es" },
+    { code: "fr", name: "Français", flag: "fr" },
+    { code: "it", name: "Italiano", flag: "it" },
   ];
 
   // Simplified flags (3:2), as in the Windows app.

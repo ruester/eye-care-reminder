@@ -8,7 +8,7 @@ from . import languages, painting, settings
 
 
 class LanguageComboBox(Gtk.ComboBox):
-    """Drop-down list of languages.ALL, each with its flag and native country name."""
+    """Drop-down list of languages.ALL, each with its flag and its name in the language itself."""
 
     def __init__(self, selected):
         store = Gtk.ListStore(GdkPixbuf.Pixbuf, str)

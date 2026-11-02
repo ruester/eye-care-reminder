@@ -11,30 +11,30 @@ from .translations import Texts
 @dataclass(frozen=True)
 class Language:
     code: str  # stored in the settings file
-    native_name: str  # native name of the country shown in the switcher
+    native_name: str  # name of the language in itself, shown in the switcher
     flag: Flag
     texts: Texts
 
 
 ENGLISH = Language("en", "English", flags.UNITED_KINGDOM, translations.ENGLISH)
 
-# Order of the language switcher (alphabetical by native name), same codes as on Windows.
+# Order of the language switcher (alphabetical by native language name), same codes as on Windows.
 ALL = (
-    Language("fr-BE", "Belgique", flags.BELGIUM, translations.FRENCH),
-    Language("nl-BE", "België", flags.BELGIUM, translations.DUTCH),
-    Language("cs", "Česko", flags.CZECHIA, translations.CZECH),
-    Language("de", "Deutschland", flags.GERMANY, translations.GERMAN),
+    Language("cs", "Čeština", flags.CZECHIA, translations.CZECH),
+    Language("de", "Deutsch", flags.GERMANY, translations.GERMAN),
     ENGLISH,
-    Language("es", "España", flags.SPAIN, translations.SPANISH),
-    Language("fr", "France", flags.FRANCE, translations.FRENCH),
-    Language("hr", "Hrvatska", flags.CROATIA, translations.CROATIAN),
-    Language("it", "Italia", flags.ITALY, translations.ITALIAN),
-    Language("nl", "Nederland", flags.NETHERLANDS, translations.DUTCH),
-    Language("nb", "Norge", flags.NORWAY, translations.NORWEGIAN),
-    Language("pl", "Polska", flags.POLAND, translations.POLISH),
-    Language("pt", "Portugal", flags.PORTUGAL, translations.PORTUGUESE),
+    Language("es", "Español", flags.SPAIN, translations.SPANISH),
+    Language("fr", "Français", flags.FRANCE, translations.FRENCH),
+    Language("fr-BE", "Français (Belgique)", flags.BELGIUM, translations.FRENCH),
+    Language("hr", "Hrvatski", flags.CROATIA, translations.CROATIAN),
+    Language("it", "Italiano", flags.ITALY, translations.ITALIAN),
+    Language("nl", "Nederlands", flags.NETHERLANDS, translations.DUTCH),
+    Language("nl-BE", "Nederlands (België)", flags.BELGIUM, translations.DUTCH),
+    Language("nb", "Norsk", flags.NORWAY, translations.NORWEGIAN),
+    Language("pl", "Polski", flags.POLAND, translations.POLISH),
+    Language("pt", "Português", flags.PORTUGAL, translations.PORTUGUESE),
     Language("fi", "Suomi", flags.FINLAND, translations.FINNISH),
-    Language("sv", "Sverige", flags.SWEDEN, translations.SWEDISH),
+    Language("sv", "Svenska", flags.SWEDEN, translations.SWEDISH),
 )
 
 

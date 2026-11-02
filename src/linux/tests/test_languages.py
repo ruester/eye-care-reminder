@@ -18,7 +18,7 @@ class LanguagesTests(unittest.TestCase):
         with open(path, encoding="utf-8") as f:
             entries = re.findall(r'new Language\("([\w-]+)", "([^"]+)"', f.read())
         english = entries.pop(0)  # the English field, listed in All by name
-        entries.insert(4, english)
+        entries.insert([language.code for language in languages.ALL].index("en"), english)
         self.assertEqual(("en", "English"), english)
         self.assertEqual(entries, [(language.code, language.native_name) for language in languages.ALL])
 
@@ -29,6 +29,16 @@ class LanguagesTests(unittest.TestCase):
         with open(package, encoding="utf-8") as f:
             codes = re.findall(r'<ListItem Value="([\w-]+)"', f.read())
         self.assertEqual(sorted(codes), sorted(language.code for language in languages.ALL))
+
+    def test_switcher_shows_language_names_alphabetically(self):
+        names = [language.native_name for language in languages.ALL]
+        self.assertEqual(names[:3], ["Čeština", "Deutsch", "English"])
+        self.assertIn("Français (Belgique)", names)
+        self.assertIn("Nederlands (België)", names)
+        # Alphabetical, letters with diacritics sorted with their base letter (Č with C).
+        import unicodedata
+        key = [unicodedata.normalize("NFD", name).casefold() for name in names]
+        self.assertEqual(key, sorted(key))
 
     def test_find(self):
         self.assertEqual("de", languages.find("DE").code)

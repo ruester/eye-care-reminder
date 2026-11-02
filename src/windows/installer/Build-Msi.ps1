@@ -1,7 +1,7 @@
 <#
   Builds the multilingual MSI (called by `just build-windows`):
   1. builds Package.wxs once per culture with l10n/<culture>.wxl,
-  2. derives a code-page-neutral base from the en-US MSI (ASCII-only country names,
+  2. derives a code-page-neutral base from the en-US MSI (ASCII-only language names,
      code page 0): a transform can't change a fixed code page, but it can give a
      neutral database one (1252 for Western, 1250 for Central European languages),
   3. creates a language transform (.mst) from the base to every culture's MSI
@@ -9,7 +9,7 @@
      LCIDs in the summary information (Template). Windows Installer then applies the
      transform matching the Windows display language automatically (also for /qn);
      TRANSFORMS=:<LCID> forces one. Other display languages get the neutral base
-     (English with "Belgie", "Cesko", "Espana" in the language list),
+     (English with "Cestina", "Espanol", "Francais", ... in the language list),
   4. checks every transform by applying it to a copy of the result.
 #>
 param(
@@ -34,8 +34,11 @@ $cultures = [ordered]@{
 $codepage1250 = 'cs-CZ', 'pl-PL', 'hr-HR'
 # Further display languages that get the transform of another culture.
 $aliases = @{ 2058 = 'es-ES' <# es-MX #>; 3084 = 'fr-FR' <# fr-CA #> }
-# Non-ASCII country names of the language list (Package.wxs) -> ASCII spelling for the neutral base.
-$asciiNames = @{ 'nl-BE' = 'Belgie'; 'cs' = 'Cesko'; 'es' = 'Espana' }
+# Non-ASCII language names of the language list (Package.wxs) -> ASCII spelling for the neutral base.
+$asciiNames = @{
+    'cs' = 'Cestina'; 'es' = 'Espanol'; 'fr' = 'Francais'; 'fr-BE' = 'Francais (Belgique)'
+    'nl-BE' = 'Nederlands (Belgie)'; 'pt' = 'Portugues'
+}
 
 $installerDir = $PSScriptRoot
 $work = [string](Join-Path (Split-Path -Parent $Output) 'windows\msi')
@@ -88,7 +91,7 @@ function Get-Value($Database, [string]$Query) {
     $value
 }
 
-function Get-CountryName($Database, [string]$Code) {
+function Get-LanguageName($Database, [string]$Code) {
     Get-Value $Database "SELECT ``Text`` FROM ``ComboBox`` WHERE ``Property`` = 'APPLANGUAGE' AND ``Value`` = '$Code'"
 }
 
@@ -155,7 +158,7 @@ Invoke-Com $database Commit InvokeMethod | Out-Null
 Release $summary
 Release $database
 
-# --- 4. Check every transform: language, app language default and localized country names ---
+# --- 4. Check every transform: language, app language default and localized language names ---
 foreach ($culture in $cultures.Keys) {
     $lcid = $cultures[$culture]
     # The copy stays in the intermediate folder (COM may still hold it open).
@@ -166,10 +169,10 @@ foreach ($culture in $cultures.Keys) {
     $productLanguage = Get-Value $db "SELECT ``Value`` FROM ``Property`` WHERE ``Property`` = 'ProductLanguage'"
     $transformedProductCode = Get-Value $db "SELECT ``Value`` FROM ``Property`` WHERE ``Property`` = 'ProductCode'"
     $appLanguage = Get-Value $db "SELECT ``Value`` FROM ``Property`` WHERE ``Property`` = 'APPLANGUAGE'"
-    $names = '{0}/{1}/{2}' -f (Get-CountryName $db 'nl-BE'), (Get-CountryName $db 'cs'), (Get-CountryName $db 'es')
+    $names = '{0}/{1}/{2}/{3}' -f (Get-LanguageName $db 'nl-BE'), (Get-LanguageName $db 'cs'), (Get-LanguageName $db 'es'), (Get-LanguageName $db 'pt')
     Release $db
 
-    $expectedNames = if ($culture -in $codepage1250) { 'België/Česko/Espana' } else { 'België/Cesko/España' }
+    $expectedNames = if ($culture -in $codepage1250) { 'Nederlands (België)/Čeština/Espanol/Portugues' } else { 'Nederlands (België)/Cestina/Español/Português' }
     if ($transformedProductCode -ne $productCode) { throw "Transform $culture changes the product code to $transformedProductCode" }
     if ($productLanguage -ne "$lcid" -or $appLanguage -ne $culture.Split('-')[0] -or $names -cne $expectedNames) {
         throw "Transform $culture is broken: ProductLanguage=$productLanguage APPLANGUAGE=$appLanguage names=$names"

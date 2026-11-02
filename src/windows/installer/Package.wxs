@@ -139,21 +139,21 @@
         <Control Id="LanguageLabel" Type="Text" X="20" Y="60" Width="330" Height="15" Text="!(loc.LanguageDlgLabel)" />
         <Control Id="LanguageCombo" Type="ComboBox" X="20" Y="76" Width="160" Height="16" Property="APPLANGUAGE" ComboList="yes" Sorted="no">
           <ComboBox Property="APPLANGUAGE">
-            <ListItem Value="fr-BE" Text="Belgique" />
-            <ListItem Value="nl-BE" Text="België" />
-            <ListItem Value="cs" Text="!(loc.NameCzechia)" />
-            <ListItem Value="de" Text="Deutschland" />
+            <ListItem Value="cs" Text="!(loc.NameCzech)" />
+            <ListItem Value="de" Text="Deutsch" />
             <ListItem Value="en" Text="English" />
-            <ListItem Value="es" Text="!(loc.NameSpain)" />
-            <ListItem Value="fr" Text="France" />
-            <ListItem Value="hr" Text="Hrvatska" />
-            <ListItem Value="it" Text="Italia" />
-            <ListItem Value="nl" Text="Nederland" />
-            <ListItem Value="nb" Text="Norge" />
-            <ListItem Value="pl" Text="Polska" />
-            <ListItem Value="pt" Text="Portugal" />
+            <ListItem Value="es" Text="!(loc.NameSpanish)" />
+            <ListItem Value="fr" Text="Français" />
+            <ListItem Value="fr-BE" Text="Français (Belgique)" />
+            <ListItem Value="hr" Text="Hrvatski" />
+            <ListItem Value="it" Text="Italiano" />
+            <ListItem Value="nl" Text="Nederlands" />
+            <ListItem Value="nl-BE" Text="Nederlands (België)" />
+            <ListItem Value="nb" Text="Norsk" />
+            <ListItem Value="pl" Text="Polski" />
+            <ListItem Value="pt" Text="!(loc.NamePortuguese)" />
             <ListItem Value="fi" Text="Suomi" />
-            <ListItem Value="sv" Text="Sverige" />
+            <ListItem Value="sv" Text="Svenska" />
           </ComboBox>
         </Control>
         <Control Id="Hint" Type="Text" X="20" Y="104" Width="330" Height="30" NoPrefix="yes" Text="!(loc.LanguageDlgHint)" />

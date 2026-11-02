@@ -10,7 +10,8 @@
   <String Id="LaunchApp" Value="Eye Care Reminder starten" />
   <String Id="ShortcutDescription" Value="Erinnert Sie daran, Ihre Augen auszuruhen" />
   <String Id="DowngradeError" Value="Eine neuere Version von [ProductName] ist bereits installiert." />
-  <!-- Language list: native names the code page 1252 can store -->
-  <String Id="NameCzechia" Value="Cesko" />
-  <String Id="NameSpain" Value="España" />
+  <!-- Language list: native language names the code page 1252 can store -->
+  <String Id="NameCzech" Value="Cestina" />
+  <String Id="NameSpanish" Value="Español" />
+  <String Id="NamePortuguese" Value="Português" />
 </WixLocalization>

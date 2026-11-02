@@ -173,8 +173,10 @@ suffixes such as `-rc1`.
   French `fr`, Italian `it`, Spanish `es`, Portuguese `pt`, Dutch `nl`,
   Norwegian Bokmål `nb`, Swedish `sv`, Finnish `fi`, Czech `cs`, Polish `pl`,
   Croatian `hr`, plus Belgium as `nl-BE` and `fr-BE` (same texts as nl/fr, Belgian
-  flag). The switcher lists native country names ("Deutschland", "België",
-  "Belgique", ..., "English") with flags.
+  flag). Language switchers (apps, installer, website) list language names in the
+  language itself, alphabetically, with flags ("Čeština", "Deutsch", "English",
+  "Español", "Français", "Français (Belgique)", ...); country names appear only where the
+  locale matters (the Belgian variants), never instead of the language name.
 - App: `Language.cs` (`Languages.All`, detection, codes), `Translations.cs` (all
   texts, `Texts.cs` describes them), `Plural.cs` (one/few/other forms for
   cs/pl/hr), `Flag.cs` + `FlagPainter.cs` (flags drawn with GDI+: Windows has no
@@ -189,7 +191,7 @@ suffixes such as `-rc1`.
   culture in `Build-Msi.ps1` plus `l10n/<culture>.wxl`.
 - Installer: `Build-Msi.ps1` builds `Package.wxs` once per culture (13 cultures,
   `l10n/<culture>.wxl` + the WixUI translations), derives a code-page-neutral base
-  (code page 0, ASCII country names) from the en-US MSI because a transform can't
+  (code page 0, ASCII language names) from the en-US MSI because a transform can't
   change a fixed code page, creates language transforms
   (`wix msi transform -t language`) from that base to every culture (en-US too), embeds them as
   substorages named by LCID and lists all LCIDs in the summary Template, then
@@ -199,8 +201,10 @@ suffixes such as `-rc1`.
   `LanguageDlg` page (after Welcome) chooses the app language (`APPLANGUAGE`,
   default: the transform's language, Belgian via `UserLanguageID`, or the
   previously installed value) and writes it to HKCU. Code pages: 1252, and 1250
-  for cs/pl/hr, so the MSI list shows "Cesko" resp. "Espana" where Č/ñ don't
-  fit the code page (`NameCzechia`/`NameSpain` strings).
+  for cs/pl/hr, so the MSI list shows "Cestina" resp. "Espanol"/"Portugues" where
+  Č/ñ/ê don't fit the code page (`NameCzech`/`NameSpanish`/`NamePortuguese` strings; the
+  neutral base uses ASCII spellings, `$asciiNames` in `Build-Msi.ps1`). Check new names
+  against both code pages (e.g. "Norsk", not "Norsk bokmål": cp1250 has no å).
 - Single instance via a named mutex; launching the exe again signals the running
   instance (named event) to open the settings dialog.
 - `NotifyIcon.Text` must stay <= 63 characters (throws otherwise on .NET Framework).
