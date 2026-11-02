@@ -9,7 +9,7 @@ Eye Care Reminder is a lightweight desktop application for Windows and Linux tha
 
 The app is available in English, German, French, Italian, Spanish, Portuguese, Dutch, Norwegian, Swedish, Finnish, Czech, Polish and Croatian. It starts in the language of your system (Windows display language, or the locale on Linux); the settings dialog and the Windows installer have a language switcher.
 
-**Downloads:** [Windows installer (.msi)](https://github.com/ruester/eye-care-reminder/releases/download/v1.3.2/eye-care-reminder-1.3.2-windows-x64.msi) · [Linux installer (.bin)](https://github.com/ruester/eye-care-reminder/releases/download/v1.3.2/eye-care-reminder-1.3.2-linux.bin) · [all releases](https://github.com/ruester/eye-care-reminder/releases)
+**Downloads:** [Windows installer (.msi)](https://github.com/ruester/eye-care-reminder/releases/download/v1.3.3/eye-care-reminder-1.3.3-windows-x64.msi) · [Linux installer (.bin)](https://github.com/ruester/eye-care-reminder/releases/download/v1.3.3/eye-care-reminder-1.3.3-linux.bin) · [all releases](https://github.com/ruester/eye-care-reminder/releases)
 
 ## Installation
 
@@ -34,14 +34,14 @@ The reminder is the app's own popup in the bottom-right corner (on Wayland throu
 Download the `.bin`, make it executable and run it in a terminal (no `sudo` needed):
 
 ```bash
-chmod +x eye-care-reminder-1.3.2-linux.bin
+chmod +x eye-care-reminder-1.3.3-linux.bin
 ```
 
 ```bash
-./eye-care-reminder-1.3.2-linux.bin
+./eye-care-reminder-1.3.3-linux.bin
 ```
 
-(Without `chmod`, `sh eye-care-reminder-1.3.2-linux.bin` works too.) The installer
+(Without `chmod`, `sh eye-care-reminder-1.3.3-linux.bin` works too.) The installer
 
 - first checks the system: Linux, desktop (Xfce, Unity, GNOME, KDE Plasma and i3 are supported; others work with limitations, it asks before installing there), display server, Python 3.8+ and the GTK 3 dependencies (plus AppIndicator on Unity, GNOME and KDE, and the AppIndicator extension on GNOME). `--check` runs only this check,
 - installs the app for your user to `~/.local/share/eye-care-reminder`, with an application menu entry and an autostart entry, and starts it,
