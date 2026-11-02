@@ -9,7 +9,7 @@ class LanguagesTests(unittest.TestCase):
         names = [language.native_name for language in languages.ALL]
         self.assertEqual(len(codes), len(set(codes)))
         self.assertEqual(len(names), len(set(names)))
-        self.assertEqual(15, len(languages.ALL))
+        self.assertEqual(13, len(languages.ALL))
 
     def test_same_list_as_windows_app(self):
         import os
@@ -33,8 +33,6 @@ class LanguagesTests(unittest.TestCase):
     def test_switcher_shows_language_names_alphabetically(self):
         names = [language.native_name for language in languages.ALL]
         self.assertEqual(names[:3], ["Čeština", "Deutsch", "English"])
-        self.assertIn("Français (Belgique)", names)
-        self.assertIn("Nederlands (België)", names)
         # Alphabetical, letters with diacritics sorted with their base letter (Č with C).
         import unicodedata
         key = [unicodedata.normalize("NFD", name).casefold() for name in names]
@@ -42,7 +40,7 @@ class LanguagesTests(unittest.TestCase):
 
     def test_find(self):
         self.assertEqual("de", languages.find("DE").code)
-        self.assertEqual("nl-BE", languages.find("nl-be").code)
+        self.assertIsNone(languages.find("nl-BE"))
         self.assertIsNone(languages.find("xx"))
         self.assertIsNone(languages.find(None))
         self.assertIsNone(languages.find(""))
@@ -53,11 +51,9 @@ class LanguagesTests(unittest.TestCase):
             ("de_AT.UTF-8", "de_AT.UTF-8", "de"),
             ("en_US.UTF-8", None, "en"),
             ("en_GB", None, "en"),
-            ("fr_FR.UTF-8", "fr_BE.UTF-8", "fr-BE"),
-            ("fr_BE.UTF-8", None, "fr-BE"),
-            ("nl_BE.UTF-8", None, "nl-BE"),
-            ("nl_NL.UTF-8", "nl_BE.UTF-8", "nl-BE"),
-            ("nl_NL.UTF-8", "de_DE.UTF-8", "nl"),
+            ("fr_FR.UTF-8", None, "fr"),
+            ("fr_BE.UTF-8", None, "fr"),
+            ("nl_BE.UTF-8", None, "nl"),
             ("de_BE.UTF-8", None, "de"),
             ("nb_NO.UTF-8", None, "nb"),
             ("nn_NO.UTF-8", None, "nb"),
@@ -72,27 +68,30 @@ class LanguagesTests(unittest.TestCase):
         ]
         for messages, region, expected in cases:
             with self.subTest(messages=messages, region=region):
-                self.assertEqual(expected, languages.detect(messages, region).code)
+                self.assertEqual(expected, languages.detect(messages).code)
 
     def test_locale_from_environment(self):
         env = {"LANG": "de_DE.UTF-8"}
-        self.assertEqual(("de_DE.UTF-8", "de_DE.UTF-8"), languages.locale_from_environment(env))
-        env = {"LANG": "en_US.UTF-8", "LC_MESSAGES": "fr_FR.UTF-8", "LC_TIME": "fr_BE.UTF-8"}
-        self.assertEqual(("fr_FR.UTF-8", "fr_BE.UTF-8"), languages.locale_from_environment(env))
-        env = {"LANG": "en_US.UTF-8", "LC_ALL": "it_IT.UTF-8", "LC_TIME": "fr_BE.UTF-8"}
-        self.assertEqual(("it_IT.UTF-8", "it_IT.UTF-8"), languages.locale_from_environment(env))
+        self.assertEqual("de_DE.UTF-8", languages.locale_from_environment(env))
+        env = {"LANG": "en_US.UTF-8", "LC_MESSAGES": "fr_FR.UTF-8"}
+        self.assertEqual("fr_FR.UTF-8", languages.locale_from_environment(env))
+        env = {"LANG": "en_US.UTF-8", "LC_MESSAGES": "fr_FR.UTF-8", "LC_ALL": "it_IT.UTF-8"}
+        self.assertEqual("it_IT.UTF-8", languages.locale_from_environment(env))
         env = {"LANG": "en_US.UTF-8", "LANGUAGE": "sv:en"}
-        self.assertEqual("sv", languages.locale_from_environment(env)[0])
+        self.assertEqual("sv", languages.locale_from_environment(env))
         env = {"LANG": "C", "LANGUAGE": "sv:en"}
-        self.assertEqual("C", languages.locale_from_environment(env)[0])
-        self.assertEqual(("", ""), languages.locale_from_environment({}))
+        self.assertEqual("C", languages.locale_from_environment(env))
+        self.assertEqual("", languages.locale_from_environment({}))
 
     def test_from_setting(self):
         env = {"LANG": "pl_PL.UTF-8"}
         self.assertEqual("hr", languages.from_setting("hr", env).code)
         self.assertEqual("pl", languages.from_setting(None, env).code)
         self.assertEqual("pl", languages.from_setting("invalid", env).code)
-        self.assertEqual("nl-BE", languages.from_setting(None, {"LANG": "nl_BE.UTF-8"}).code)
+        self.assertEqual("nl", languages.from_setting(None, {"LANG": "nl_BE.UTF-8"}).code)
+        # Former Belgian variants (up to version 1.3) become their language.
+        self.assertEqual("nl", languages.from_setting("nl-BE", env).code)
+        self.assertEqual("fr", languages.from_setting("fr-BE", env).code)
 
 
 if __name__ == "__main__":

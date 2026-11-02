@@ -33,12 +33,12 @@ class SettingsTests(unittest.TestCase):
         s.interval_minutes = 25
         s.auto_hide = False
         s.auto_hide_seconds = 300
-        s.language = "nl-BE"
+        s.language = "nl"
         s.save()
         self.assertTrue(s.exists)
         loaded = Settings.load(self.path)
         self.assertTrue(loaded.exists)
-        self.assertEqual((25, False, 300, "nl-BE"),
+        self.assertEqual((25, False, 300, "nl"),
                          (loaded.interval_minutes, loaded.auto_hide, loaded.auto_hide_seconds, loaded.language))
         self.assertFalse(os.path.exists(self.path + ".tmp"))
 

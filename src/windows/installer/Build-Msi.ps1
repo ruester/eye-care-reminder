@@ -35,10 +35,7 @@ $codepage1250 = 'cs-CZ', 'pl-PL', 'hr-HR'
 # Further display languages that get the transform of another culture.
 $aliases = @{ 2058 = 'es-ES' <# es-MX #>; 3084 = 'fr-FR' <# fr-CA #> }
 # Non-ASCII language names of the language list (Package.wxs) -> ASCII spelling for the neutral base.
-$asciiNames = @{
-    'cs' = 'Cestina'; 'es' = 'Espanol'; 'fr' = 'Francais'; 'fr-BE' = 'Francais (Belgique)'
-    'nl-BE' = 'Nederlands (Belgie)'; 'pt' = 'Portugues'
-}
+$asciiNames = @{ 'cs' = 'Cestina'; 'es' = 'Espanol'; 'fr' = 'Francais'; 'pt' = 'Portugues' }
 
 $installerDir = $PSScriptRoot
 $work = [string](Join-Path (Split-Path -Parent $Output) 'windows\msi')
@@ -169,10 +166,10 @@ foreach ($culture in $cultures.Keys) {
     $productLanguage = Get-Value $db "SELECT ``Value`` FROM ``Property`` WHERE ``Property`` = 'ProductLanguage'"
     $transformedProductCode = Get-Value $db "SELECT ``Value`` FROM ``Property`` WHERE ``Property`` = 'ProductCode'"
     $appLanguage = Get-Value $db "SELECT ``Value`` FROM ``Property`` WHERE ``Property`` = 'APPLANGUAGE'"
-    $names = '{0}/{1}/{2}/{3}' -f (Get-LanguageName $db 'nl-BE'), (Get-LanguageName $db 'cs'), (Get-LanguageName $db 'es'), (Get-LanguageName $db 'pt')
+    $names = '{0}/{1}/{2}/{3}' -f (Get-LanguageName $db 'cs'), (Get-LanguageName $db 'es'), (Get-LanguageName $db 'fr'), (Get-LanguageName $db 'pt')
     Release $db
 
-    $expectedNames = if ($culture -in $codepage1250) { 'Nederlands (België)/Čeština/Espanol/Portugues' } else { 'Nederlands (België)/Cestina/Español/Português' }
+    $expectedNames = if ($culture -in $codepage1250) { 'Čeština/Espanol/Français/Portugues' } else { 'Cestina/Español/Français/Português' }
     if ($transformedProductCode -ne $productCode) { throw "Transform $culture changes the product code to $transformedProductCode" }
     if ($productLanguage -ne "$lcid" -or $appLanguage -ne $culture.Split('-')[0] -or $names -cne $expectedNames) {
         throw "Transform $culture is broken: ProductLanguage=$productLanguage APPLANGUAGE=$appLanguage names=$names"

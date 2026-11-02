@@ -78,51 +78,52 @@ namespace EyeCareReminder.Tests
         [Theory]
         [InlineData("de", "de")]
         [InlineData("DE", "de")]
-        [InlineData("nl-be", "nl-BE")]
+        [InlineData("nl", "nl")]
+        [InlineData("nl-BE", null)]
         [InlineData("xx", null)]
         [InlineData("", null)]
         [InlineData(null, null)]
         public void Find(string code, string expected) => Assert.Equal(expected, Languages.Find(code)?.Code);
 
         [Theory]
-        [InlineData("en-US", "en-US", "en")]
-        [InlineData("en-GB", "de-DE", "en")]
-        [InlineData("de-DE", "de-DE", "de")]
-        [InlineData("de-AT", "de-AT", "de")]
-        [InlineData("fr-FR", "fr-FR", "fr")]
-        [InlineData("fr-FR", "fr-BE", "fr-BE")]
-        [InlineData("fr-BE", "en-US", "fr-BE")]
-        [InlineData("nl-NL", "nl-NL", "nl")]
-        [InlineData("nl-NL", "nl-BE", "nl-BE")]
-        [InlineData("en-US", "nl-BE", "en")]
-        [InlineData("it-IT", "it-IT", "it")]
-        [InlineData("es-ES", "es-ES", "es")]
-        [InlineData("es-MX", "es-MX", "es")]
-        [InlineData("pt-PT", "pt-PT", "pt")]
-        [InlineData("nb-NO", "nb-NO", "nb")]
-        [InlineData("nn-NO", "nn-NO", "nb")]
-        [InlineData("sv-SE", "sv-SE", "sv")]
-        [InlineData("fi-FI", "fi-FI", "fi")]
-        [InlineData("cs-CZ", "cs-CZ", "cs")]
-        [InlineData("pl-PL", "pl-PL", "pl")]
-        [InlineData("hr-HR", "hr-HR", "hr")]
-        [InlineData("ja-JP", "ja-JP", "en")]
-        public void DetectUsesTheDisplayLanguage(string ui, string region, string expected)
+        [InlineData("en-US", "en")]
+        [InlineData("en-GB", "en")]
+        [InlineData("de-DE", "de")]
+        [InlineData("de-AT", "de")]
+        [InlineData("fr-FR", "fr")]
+        [InlineData("fr-BE", "fr")]
+        [InlineData("nl-NL", "nl")]
+        [InlineData("nl-BE", "nl")]
+        [InlineData("it-IT", "it")]
+        [InlineData("es-ES", "es")]
+        [InlineData("es-MX", "es")]
+        [InlineData("pt-PT", "pt")]
+        [InlineData("nb-NO", "nb")]
+        [InlineData("nn-NO", "nb")]
+        [InlineData("sv-SE", "sv")]
+        [InlineData("fi-FI", "fi")]
+        [InlineData("cs-CZ", "cs")]
+        [InlineData("pl-PL", "pl")]
+        [InlineData("hr-HR", "hr")]
+        [InlineData("ja-JP", "en")]
+        public void DetectUsesTheDisplayLanguage(string ui, string expected)
         {
-            var language = Languages.Detect(new CultureInfo(ui), new CultureInfo(region));
+            var language = Languages.Detect(new CultureInfo(ui));
 
             Assert.Equal(expected, language.Code);
         }
 
         [Theory]
         [InlineData("pl", "pl")]
+        [InlineData("nl-BE", "nl")] // former Belgian variants
+        [InlineData("fr-BE", "fr")]
         [InlineData("unknown", "de")]
         [InlineData(null, "de")]
         public void FromSettingFallsBackToDetection(string stored, string expected)
         {
             var german = new CultureInfo("de-DE");
 
-            Assert.Equal(expected, Languages.FromSetting(stored, german, german).Code);
+            Assert.Equal(expected, Languages.FromSetting(stored, german).Code);
         }
 
         private static string[] Placeholders(string text) =>

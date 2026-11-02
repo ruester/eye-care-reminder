@@ -69,9 +69,6 @@ namespace EyeCareReminder
     {
         private static Color Rgb(int rgb) => Color.FromArgb((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
 
-        public static readonly Flag Belgium = new Flag(FlagPattern.VerticalStripes,
-            new[] { Rgb(0x000000), Rgb(0xFDDA24), Rgb(0xEF3340) });
-
         public static readonly Flag Croatia = new Flag(FlagPattern.HorizontalStripes,
             new[] { Rgb(0xFF0000), Rgb(0xFFFFFF), Rgb(0x171796) }, emblem: FlagEmblem.Croatia);
 

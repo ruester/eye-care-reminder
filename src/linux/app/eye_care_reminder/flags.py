@@ -36,7 +36,6 @@ class Flag:
         return self.weights or (1,) * len(self.colors)
 
 
-BELGIUM = Flag(Pattern.VERTICAL_STRIPES, (0x000000, 0xFDDA24, 0xEF3340))
 CROATIA = Flag(Pattern.HORIZONTAL_STRIPES, (0xFF0000, 0xFFFFFF, 0x171796), emblem=Emblem.CROATIA)
 CZECHIA = Flag(Pattern.CZECHIA, (0xFFFFFF, 0xD7141A, 0x11457E))
 FINLAND = Flag(Pattern.NORDIC_CROSS, (0xFFFFFF, 0x002F6C), (5, 3, 10), (4, 3, 4))

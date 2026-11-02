@@ -6,7 +6,7 @@ namespace EyeCareReminder
 {
     /// <summary>
     /// A selectable app language, shown with its flag and its name in the language itself
-    /// ("Deutsch", "Français", ...); the Belgian variants name the country in brackets.
+    /// ("Deutsch", "Français", ...).
     /// </summary>
     internal sealed class Language
     {
@@ -43,11 +43,9 @@ namespace EyeCareReminder
             English,
             new Language("es", "Español", Flags.Spain, Translations.Spanish),
             new Language("fr", "Français", Flags.France, Translations.French),
-            new Language("fr-BE", "Français (Belgique)", Flags.Belgium, Translations.French),
             new Language("hr", "Hrvatski", Flags.Croatia, Translations.Croatian),
             new Language("it", "Italiano", Flags.Italy, Translations.Italian),
             new Language("nl", "Nederlands", Flags.Netherlands, Translations.Dutch),
-            new Language("nl-BE", "Nederlands (België)", Flags.Belgium, Translations.Dutch),
             new Language("nb", "Norsk", Flags.Norway, Translations.Norwegian),
             new Language("pl", "Polski", Flags.Poland, Translations.Polish),
             new Language("pt", "Português", Flags.Portugal, Translations.Portuguese),
@@ -69,33 +67,34 @@ namespace EyeCareReminder
         }
 
         /// <summary>
-        /// The language matching the Windows display language (<paramref name="uiCulture"/>);
-        /// Dutch and French become Belgian if either culture is Belgian (the regional format
-        /// usually is, Windows has no Belgian display language). Unsupported languages: English.
+        /// The language matching the Windows display language (<paramref name="uiCulture"/>),
+        /// whatever its region (fr-BE is French). Unsupported languages: English.
         /// </summary>
-        public static Language Detect(CultureInfo uiCulture, CultureInfo regionCulture)
+        public static Language Detect(CultureInfo uiCulture)
         {
             string language = uiCulture.TwoLetterISOLanguageName;
             if (language == "nn" || language == "no")
             {
                 language = "nb";
             }
-            if ((language == "nl" || language == "fr") && (IsBelgian(uiCulture) || IsBelgian(regionCulture)))
-            {
-                language += "-BE";
-            }
             return Find(language) ?? English;
         }
 
-        /// <summary>The stored language if valid, otherwise the detected one.</summary>
-        public static Language FromSetting(string code, CultureInfo uiCulture, CultureInfo regionCulture) =>
-            Find(code) ?? Detect(uiCulture, regionCulture);
+        /// <summary>
+        /// The stored language if valid, otherwise the detected one. A stored code with a region
+        /// that no longer exists (the Belgian nl-BE / fr-BE up to version 1.3) is its language.
+        /// </summary>
+        public static Language FromSetting(string code, CultureInfo uiCulture)
+        {
+            var language = Find(code);
+            if (language == null && code != null && code.Contains("-"))
+            {
+                language = Find(code.Substring(0, code.IndexOf('-')));
+            }
+            return language ?? Detect(uiCulture);
+        }
 
         /// <summary>The stored language if valid, otherwise the one of the current Windows user.</summary>
-        public static Language FromSetting(string code) =>
-            FromSetting(code, CultureInfo.CurrentUICulture, CultureInfo.CurrentCulture);
-
-        private static bool IsBelgian(CultureInfo culture) =>
-            culture.Name.EndsWith("-BE", StringComparison.OrdinalIgnoreCase);
+        public static Language FromSetting(string code) => FromSetting(code, CultureInfo.CurrentUICulture);
     }
 }

@@ -74,9 +74,9 @@
 
     <!--
       App language (codes as in src/windows/app/Language.cs). Default: the language of
-      the applied language transform (= Windows display language), Belgian if the
-      regional format is Belgian, or the language chosen at a previous installation.
-      Silent installs can pass APPLANGUAGE=<code>.
+      the applied language transform (= Windows display language), or the language chosen
+      at a previous installation (the Belgian nl-BE / fr-BE of versions up to 1.3 become
+      nl / fr). Silent installs can pass APPLANGUAGE=<code>.
     -->
     <Property Id="APPLANGUAGE" Value="!(loc.DefaultAppLanguage)" Secure="yes" />
     <Property Id="PREVIOUSAPPLANGUAGE">
@@ -85,12 +85,12 @@
     </Property>
     <SetProperty Action="SetAppLanguagePrevious" Id="APPLANGUAGE" Value="[PREVIOUSAPPLANGUAGE]"
                  After="AppSearch" Sequence="first" Condition="PREVIOUSAPPLANGUAGE" />
-    <SetProperty Action="SetAppLanguageBelgianDutch" Id="APPLANGUAGE" Value="nl-BE"
+    <SetProperty Action="SetAppLanguageFormerDutch" Id="APPLANGUAGE" Value="nl"
                  After="SetAppLanguagePrevious" Sequence="first"
-                 Condition="NOT PREVIOUSAPPLANGUAGE AND APPLANGUAGE = &quot;nl&quot; AND UserLanguageID = 2067" />
-    <SetProperty Action="SetAppLanguageBelgianFrench" Id="APPLANGUAGE" Value="fr-BE"
-                 After="SetAppLanguageBelgianDutch" Sequence="first"
-                 Condition="NOT PREVIOUSAPPLANGUAGE AND APPLANGUAGE = &quot;fr&quot; AND UserLanguageID = 2060" />
+                 Condition="PREVIOUSAPPLANGUAGE = &quot;nl-BE&quot;" />
+    <SetProperty Action="SetAppLanguageFormerFrench" Id="APPLANGUAGE" Value="fr"
+                 After="SetAppLanguageFormerDutch" Sequence="first"
+                 Condition="PREVIOUSAPPLANGUAGE = &quot;fr-BE&quot;" />
 
     <Feature Id="Main">
       <ComponentGroupRef Id="AppFiles" />
@@ -144,11 +144,9 @@
             <ListItem Value="en" Text="English" />
             <ListItem Value="es" Text="!(loc.NameSpanish)" />
             <ListItem Value="fr" Text="Français" />
-            <ListItem Value="fr-BE" Text="Français (Belgique)" />
             <ListItem Value="hr" Text="Hrvatski" />
             <ListItem Value="it" Text="Italiano" />
             <ListItem Value="nl" Text="Nederlands" />
-            <ListItem Value="nl-BE" Text="Nederlands (België)" />
             <ListItem Value="nb" Text="Norsk" />
             <ListItem Value="pl" Text="Polski" />
             <ListItem Value="pt" Text="!(loc.NamePortuguese)" />

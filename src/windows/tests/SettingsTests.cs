@@ -37,9 +37,9 @@ namespace EyeCareReminder.Tests
         [Fact]
         public void LanguageRoundTrip()
         {
-            Settings.SaveLanguage("nl-BE");
+            Settings.SaveLanguage("nl");
 
-            Assert.Equal("nl-BE", Settings.LoadLanguage());
+            Assert.Equal("nl", Settings.LoadLanguage());
             Assert.False(Settings.Exists()); // the installer writes the language before the first start
         }
 

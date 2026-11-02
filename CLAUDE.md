@@ -79,8 +79,8 @@ suffixes such as `-rc1`.
 - It mirrors the Windows app (same features, texts, languages, settings ranges):
   - `eye_care_reminder/` modules without GTK (unit tested): `plural`, `translations`
     (same texts as `Translations.cs`; a test compares them, so change both), `languages`
-    (list as in `Language.cs`; detection from `LC_ALL`/`LC_MESSAGES`/`LANG`/`LANGUAGE`,
-    Belgian via the messages or `LC_TIME` locale), `flags` + `painting` (cairo: flags,
+    (list as in `Language.cs`; detection from `LC_ALL`/`LC_MESSAGES`/`LANG`/`LANGUAGE`),
+    `flags` + `painting` (cairo: flags,
     app icon; `python3 -m eye_care_reminder.painting DIR` re-renders `icons/*.png`),
     `settings` (`$XDG_CONFIG_HOME/eye-care-reminder/settings.ini`, keys
     `interval_minutes`, `auto_hide`, `auto_hide_seconds`, `language`), `timeformat`,
@@ -172,18 +172,19 @@ suffixes such as `-rc1`.
 - Supported: English (`en`, no US/GB distinction, UK flag), German `de`,
   French `fr`, Italian `it`, Spanish `es`, Portuguese `pt`, Dutch `nl`,
   Norwegian Bokmål `nb`, Swedish `sv`, Finnish `fi`, Czech `cs`, Polish `pl`,
-  Croatian `hr`, plus Belgium as `nl-BE` and `fr-BE` (same texts as nl/fr, Belgian
-  flag). Language switchers (apps, installer, website) list language names in the
-  language itself, alphabetically, with flags ("Čeština", "Deutsch", "English",
-  "Español", "Français", "Français (Belgique)", ...); country names appear only where the
-  locale matters (the Belgian variants), never instead of the language name.
+  Croatian `hr`. One entry per language, no regional variants (Belgian users pick
+  Nederlands or Français). Language switchers (apps, installer, website) list language
+  names in the language itself, alphabetically, with flags ("Čeština", "Deutsch",
+  "English", "Español", "Français", ...), never country names. The Belgian variants
+  `nl-BE`/`fr-BE` existed up to version 1.3: a stored code with a region is read as its
+  language (`FromSetting`/`from_setting`, installer `SetAppLanguageFormer*`).
 - App: `Language.cs` (`Languages.All`, detection, codes), `Translations.cs` (all
   texts, `Texts.cs` describes them), `Plural.cs` (one/few/other forms for
   cs/pl/hr), `Flag.cs` + `FlagPainter.cs` (flags drawn with GDI+: Windows has no
   flag emoji), `LanguageComboBox.cs` (owner-drawn switcher in the settings dialog,
   which re-translates itself on change). Language: stored `Language` value if
-  valid, else the Windows display language (`CurrentUICulture`; nl/fr become
-  Belgian if the UI or regional format culture is `-BE`; nn/no -> nb), else English.
+  valid, else the Windows display language (`CurrentUICulture`, any region;
+  nn/no -> nb), else English.
 - Adding a text: add a property to `Texts` and a value in every language of
   `Translations` (the unit tests check completeness, placeholders and `&`
   accelerators). Adding a language: `Translations`, `Languages.All`, `Flags`,
@@ -199,8 +200,7 @@ suffixes such as `-rc1`.
   display language automatically (`TRANSFORMS=:1029` forces one). The wizard
   language itself can't be switched at runtime (MSI limitation); the extra
   `LanguageDlg` page (after Welcome) chooses the app language (`APPLANGUAGE`,
-  default: the transform's language, Belgian via `UserLanguageID`, or the
-  previously installed value) and writes it to HKCU. Code pages: 1252, and 1250
+  default: the transform's language, or the previously installed value) and writes it to HKCU. Code pages: 1252, and 1250
   for cs/pl/hr, so the MSI list shows "Cestina" resp. "Espanol"/"Portugues" where
   Č/ñ/ê don't fit the code page (`NameCzech`/`NameSpanish`/`NamePortuguese` strings; the
   neutral base uses ASCII spellings, `$asciiNames` in `Build-Msi.ps1`). Check new names
