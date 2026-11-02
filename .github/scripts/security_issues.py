@@ -66,11 +66,13 @@ class Finding:
 
     @property
     def title(self):
-        description = _text(self.rule.get("shortDescription")) or self.rule_id
-        title = "[%s] %s: %s (%s)" % (self.severity, self.tool, description, self.path or "repository")
-        if self.rule_id not in title:
-            title = "[%s] %s %s: %s (%s)" % (self.severity, self.tool, self.rule_id, description,
-                                             self.path or "repository")
+        description = _text(self.rule.get("shortDescription"))
+        where = self.path or "repository"
+        if not description or self.rule_id in description:
+            # e.g. Semgrep: "Semgrep Finding: python.lang.security.audit.x" -> "x"
+            title = "[%s] %s: %s (%s)" % (self.severity, self.tool, self.rule_id.rsplit(".", 1)[-1], where)
+        else:
+            title = "[%s] %s %s: %s (%s)" % (self.severity, self.tool, self.rule_id, description, where)
         return title if len(title) <= MAX_TITLE else title[:MAX_TITLE - 1] + "…"
 
     def body(self, repository, sha, server):

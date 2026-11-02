@@ -99,6 +99,13 @@ class LoadTests(unittest.TestCase):
         match = si.MARKER.search(body)
         self.assertEqual((match.group("fingerprint"), match.group("tool")), (finding.fingerprint, "bandit"))
 
+    def test_title_without_repeated_rule_id(self):
+        rule = {"id": "python.lang.security.audit.x-detected",
+                "shortDescription": {"text": "Semgrep Finding: python.lang.security.audit.x-detected"}}
+        finding = si.Finding("Semgrep OSS", rule["id"], "a.py", rule)
+        self.assertEqual(finding.title, "[medium] Semgrep OSS: x-detected (a.py)")
+        self.assertEqual(si.Finding("Bandit", "B602", "a.py", None).title, "[medium] Bandit: B602 (a.py)")
+
     def test_long_titles_are_cut(self):
         finding = si.Finding("t", "r", "x" * 300, None)
         self.assertEqual(len(finding.title), si.MAX_TITLE)

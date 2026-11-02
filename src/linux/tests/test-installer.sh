@@ -97,7 +97,8 @@ check "first run saved the settings" wait_for test -f "$settings"
 
 echo "== Start the app again (single instance)"
 xdotool search --name "^Eye Care Reminder - Settings$" windowclose 2>/dev/null || true
-"$launcher"
+# The second start hands over to the running instance and exits; it must not hang.
+check "second start returns" timeout 60 "$launcher"
 check "settings window opens again" wait_for settings_window
 check "still one instance" one_instance
 
