@@ -256,12 +256,24 @@ suffixes such as `-rc1`.
   runs as the non-elevated user). Silent installs (`/qn`) don't launch the app;
   it starts at the next logon.
 
-- The MSI is built with the WiX Toolset and is **not code-signed**. This is
-  valid: the MSI installs normally, but Windows SmartScreen shows
-  "Windows protected your PC" for downloaded files; users must click
-  "More info" -> "Run anyway". Signing would require a code-signing
-  certificate (e.g. Azure Trusted Signing, OV/EV certificate) and can be added
-  later as a `signtool` step after `wix build`.
+- The MSI is built with the WiX Toolset and is **not code-signed** (planned for later).
+  This is valid: the MSI installs normally, but Windows SmartScreen shows
+  "Windows protected your PC" for downloaded files (users click "More info" ->
+  "Run anyway") and the UAC prompt says "Unknown publisher". Researched options:
+  - SignPath Foundation: free for open-source projects (public repo, OSI license, CI
+    builds); the publisher shown is "SignPath Foundation". Best fit for this repo.
+  - Azure Artifact Signing (formerly Trusted Signing, from $9.99/month): organizations in
+    the EU and elsewhere; individuals only in the USA/Canada.
+  - OV certificate from a CA (about $150-300/year), key in hardware or the CA's cloud
+    signing service (required since 2023).
+  - Microsoft Store: doesn't sign MSI/EXE installers (only MSIX, which would mean
+    repackaging the app).
+  No option removes the SmartScreen warning at once: reputation builds per file with
+  downloads (EV certificates no longer skip that since 2024); the UAC prompt stays
+  (per-machine install), only with the publisher name. Implementation: sign
+  `EyeCareReminder.exe` before packaging and the MSI as the very last step, after
+  `Build-Msi.ps1` has embedded the transforms (`signtool sign /fd sha256 /tr <timestamp
+  server> /td sha256`).
 - Keep `UpgradeCode` in `Package.wxs` unchanged forever; it links versions for
   major upgrades.
 
@@ -278,11 +290,10 @@ suffixes such as `-rc1`.
 - The download buttons link directly to the `.msi` / `.bin` of `release_version`
   (updated by CI after each release, see Releases); the Linux card shows the
   `chmod +x` / run commands with the versioned file name (also updated by `bump-version`).
-- `.github/workflows/pages.yml` deploys `site/` on pushes to `main` that touch
-  it. It is skipped while the repository is private (Pages needs a paid plan
-  for private repos). After making the repo public, set Settings -> Pages ->
-  Source to "GitHub Actions" and run the workflow once; the site is then at
-  https://ruester.github.io/eye-care-reminder/.
+- The repository is public. `.github/workflows/pages.yml` deploys `site/` to
+  https://ruester.github.io/eye-care-reminder/ (Pages source: GitHub Actions) on pushes
+  to `main` that touch it and on manual runs. Its deploy job is skipped if the repository
+  is ever private again (Pages needs a paid plan for private repos).
 - `build.yml` ignores changes that only touch the site.
 
 ## Security
@@ -330,8 +341,8 @@ and `site/index.html` link directly to that release's installers
 (`releases/download/vX.Y.Z/...`) and show its version. Don't edit these by
 hand: after publishing a tag's release, the `update-download-links` job in
 `build.yml` runs `just bump-version X.Y.Z` on main (never downgrades, no-op if
-already current), commits "Update download links to vX.Y.Z" and, if the repo
-is public, starts the website deployment (pushes with `GITHUB_TOKEN` don't
+already current), commits "Update download links to vX.Y.Z" and starts the
+website deployment (pushes with `GITHUB_TOKEN` don't
 trigger workflows, a `workflow_dispatch` does). The links therefore only
 switch once the new installers exist. Pull afterwards: main has that commit.
 
